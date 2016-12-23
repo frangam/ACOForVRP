@@ -17,12 +17,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
-public class VRPGraph: WeightedGraph<VRPNode, VRPEdge> {
-	public VRPGraph():base(){}
-	public VRPGraph(List<VRPNode> nodes, List<VRPEdge> edges): base(nodes, edges, true){} //is a complete graph
+public class VRPVehicle {
+	public const int MIN_QUANTITY = 1;
+	[SerializeField]
+	private int quantity=1;
+
+	public int Quantity {
+		get {
+			return this.quantity;
+		}
+		set{
+			this.quantity = Mathf.Clamp (value, MIN_QUANTITY, int.MaxValue);
+		}
+	}
+
+	public VRPVehicle():this(MIN_QUANTITY){}
+	public VRPVehicle(VRPVehicle v):this(v.Quantity){}
+	public VRPVehicle(int pQuantity){
+		Quantity = pQuantity;
+	}
+
+	public override string ToString ()
+	{
+		return string.Format ("[VRPVehicle: quantity={0}]", quantity);
+	}
+	
 }

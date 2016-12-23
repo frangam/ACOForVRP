@@ -22,6 +22,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class WEdge : Edge {
+	[SerializeField]
 	private int weight;
 
 	public int Weight {

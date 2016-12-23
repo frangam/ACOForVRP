@@ -24,7 +24,21 @@ using System.Collections;
 public class VRPNode: Node {
 	public const int MIN_DEMAND = 1;
 
+	[SerializeField]
+	private bool isDepot = false;
+
+	[SerializeField]
 	private int demand = MIN_DEMAND; //valor no negativo
+
+
+	public bool IsDepot {
+		get {
+			return this.isDepot;
+		}
+		set {
+			isDepot = value;
+		}
+	}
 
 	public int Demand {
 		get {
@@ -35,18 +49,17 @@ public class VRPNode: Node {
 		}
 	}
 
-	public VRPNode():base(){
-		Demand = MIN_DEMAND;
-	}
-	public VRPNode(VRPNode n):base(n){
-		Demand = n.Demand;
-	}
-	public VRPNode(string name, int x, int y, bool visited, int pDemand):base(name, x, y, visited){
+	public VRPNode():this("",0,0,false,false,MIN_DEMAND){}
+	public VRPNode(VRPNode n):this(n.Name, n.X, n.Y, n.Visited, false, n.Demand){}
+	public VRPNode(string name, int pDemand):this(name, 0, 0, false, false, pDemand){}
+	public VRPNode(string name, bool pIsDepot, int pDemand):this(name, 0, 0, false, pIsDepot, pDemand){}
+	public VRPNode(string name, int x, int y, bool visited, bool pIsDepot, int pDemand):base(name, x, y, visited){
+		isDepot = pIsDepot;
 		Demand = pDemand; 
 	}
 
 	public override string ToString ()
 	{
-		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, demand={4}]", Name, X, Y, Visited, Demand);
+		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, isDepot={4}, demand={5}]", Name, X, Y, Visited, IsDepot, Demand);
 	}
 }

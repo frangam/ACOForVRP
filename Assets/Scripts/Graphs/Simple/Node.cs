@@ -21,9 +21,16 @@ using UnityEngine;
 using System.Collections;
 
 public class Node {
+	[SerializeField]
 	private string name;
+
+	[SerializeField]
 	private int x;
+
+	[SerializeField]
 	private int y;
+
+	[SerializeField]
 	private bool visited = false;
 
 	public string Name {

@@ -21,17 +21,32 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Graph {
-	private List<Node> nodes;
-	private List<Edge> edges;
+[System.Serializable]
+public class Graph<N, E> {
+	[SerializeField]
+	private List<N> nodes;
+
+	[SerializeField]
+	private List<E> edges;
+
+	[SerializeField]
 	private bool isComplete;
 
-	public List<Node> Nodes {
+	public List<N> Nodes {
 		get {
 			return this.nodes;
 		}
 		set {
 			nodes = value;
+		}
+	}
+
+	public List<E> Edges {
+		get {
+			return this.edges;
+		}
+		set {
+			edges = value;
 		}
 	}
 
@@ -44,18 +59,10 @@ public class Graph {
 		}
 	}
 
-	public List<Edge> Edges {
-		get {
-			return this.edges;
-		}
-		set {
-			edges = value;
-		}
-	}
-
-	public Graph():this(new List<Node> (), new List<Edge> (), false){}
-	public Graph(Graph g):this(g.Nodes, g.Edges, g.IsComplete){}
-	public Graph(List<Node> pNodes, List<Edge> pEdges, bool pIsComplete){
+	public Graph():this(new List<N> (), new List<E> (), false){}
+	public Graph(Graph<N,E> g):this(g.Nodes, g.Edges, g.IsComplete){}
+	public Graph(List<N> pNodes, List<E> pEdges):this(pNodes, pEdges, false){}
+	public Graph(List<N> pNodes, List<E> pEdges, bool pIsComplete){
 		nodes = pNodes;
 		edges = pEdges;
 		isComplete = pIsComplete;

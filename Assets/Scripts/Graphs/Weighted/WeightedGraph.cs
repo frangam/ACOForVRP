@@ -21,6 +21,9 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class WeightedGraph : Graph {
-	
+[System.Serializable]
+public class WeightedGraph<N,E> : Graph<N,E> {
+	public WeightedGraph():base(){}
+	public WeightedGraph(List<N> nodes, List<E> edges): base(nodes, edges){}
+	public WeightedGraph(List<N> nodes, List<E> edges, bool isComplete): base(nodes, edges, isComplete){}
 }
