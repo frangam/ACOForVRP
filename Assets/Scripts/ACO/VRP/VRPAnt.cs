@@ -21,8 +21,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Ant {
+public class VRPAnt : Ant<VRPVehicle> {
 	//--------------------------------------
-	// Setting Attributes
+	// Constructors
 	//--------------------------------------
+	public VRPAnt(VRPVehicle v):base(v){
+		
+	}
 }

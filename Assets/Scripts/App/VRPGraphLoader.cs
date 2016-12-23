@@ -75,7 +75,8 @@ public class VRPGraphLoader : MonoBehaviour {
 		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
 		string fileContent = ta.text; //the graph file content
 		vrp = processVRPProblemFileContent (fileContent); //create the vrp graph
-		spawnNodes (vrp.Graph.Nodes.Where( x => !x.IsDepot).ToList<VRPNode>(), depot.transform.position);
+		List<VRPNodeGameObject> nodeGOs = spawnNodes (vrp.Graph.Nodes.Where( x => !x.IsDepot).ToList<VRPNode>(), depot.transform.position);
+		vrp.NodeGOs = nodeGOs;
 		OnVRPLoaded (vrp); //dispatch event
 	}
 
@@ -88,8 +89,8 @@ public class VRPGraphLoader : MonoBehaviour {
 		string[] data3 = data2[1].Split(new string[] {"\nCOSTS:\ttravel time"}, System.StringSplitOptions.None);
 		string[] depots = data[0].Split(new string[] {"\nDEPOTS_NODES:"}, System.StringSplitOptions.None)[1].Split(new string[] {"\n"}, System.StringSplitOptions.None);
 		string[] customers = data2 [0].Split(new string[] {"\n"}, System.StringSplitOptions.None);
-		string[] edgesCosts = data3 [1].Split(new string[] {"\n"}, System.StringSplitOptions.None);;
-		string[] vehiclesSettings = data3 [0].Split(new string[] {"\n"}, System.StringSplitOptions.None);;
+		string[] edgesCosts = data3 [1].Split(new string[] {"\n"}, System.StringSplitOptions.None);
+		string[] vehiclesSettings = data3 [0].Split(new string[] {"\n"}, System.StringSplitOptions.None);
 		List<VRPNode> nodes = new List<VRPNode> ();
 		List<VRPEdge> edges = new List<VRPEdge>();
 		List<VRPVehicle> vehicles = new List<VRPVehicle>();
@@ -114,7 +115,8 @@ public class VRPGraphLoader : MonoBehaviour {
 			string c = customers [i];
 			if (c != "" && c !="\n" && c!="\r" && c!="\t") {
 				string[] values = c.Split (new string[] { "\t" }, System.StringSplitOptions.None);
-				nodes.Add (new VRPNode (values[0], Int32.Parse(values [2])));
+				VRPNode n = new VRPNode (values [0], Int32.Parse (values [2]));
+				nodes.Add (n);
 			}
 		}
 
@@ -145,11 +147,12 @@ public class VRPGraphLoader : MonoBehaviour {
 
 		graph = new VRPGraph(nodes, edges);
 
-		return new VRP(graph, vehicles);
+		return new VRP(graph, vehicles, this.depot);
 	}
 
-	private void spawnNodes(List<VRPNode> nodes, Vector3 centerPos=default(Vector3)){
+	private List<VRPNodeGameObject> spawnNodes(List<VRPNode> nodes, Vector3 centerPos=default(Vector3)){
 		int totalNodes = nodes.Count;
+		List<VRPNodeGameObject> nodeGOs = new List<VRPNodeGameObject> ();
 
 		for (int i = 0; i < totalNodes; i++){
 			float progress = (i * 1.0f) / totalNodes; //progress 0-1
@@ -160,7 +163,9 @@ public class VRPGraphLoader : MonoBehaviour {
 			Vector3 pos = new Vector3(x, y, 0) + centerPos;
 			VRPNodeGameObject nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
 			nodeGO.loadNode(nodes[i]); //load node info
-
+			nodeGOs.Add(nodeGO);
 		}   
+
+		return nodeGOs;
 	}
 }

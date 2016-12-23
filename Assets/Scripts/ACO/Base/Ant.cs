@@ -17,89 +17,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class VRP {
+public class Ant<T> {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
-	private List<VRPNodeGameObject> nodeGOs;
-
-	[SerializeField]
-	private VRPGraph graph;
-
-	[SerializeField]
-	private List<VRPVehicle> vehicles;
-
-	[SerializeField]
-	private VRPNodeGameObject depot;
+	private T theObject;
 
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
-	/// <summary>
-	/// Nodes GameObjects
-	/// </summary>
-	/// <value>The go nodes.</value>
-	public List<VRPNodeGameObject> NodeGOs{
+	public T TheObject {
 		get {
-			return this.nodeGOs;
-		}
-		set{
-			this.nodeGOs = value;
-		}
-	}
-
-	public VRPGraph Graph {
-		get {
-			return this.graph;
+			return this.theObject;
 		}
 		set {
-			graph = value;
+			theObject = value;
 		}
 	}
-
-	public List<VRPVehicle> Vehicles {
-		get {
-			return this.vehicles;
-		}
-		set {
-			vehicles = value;
-		}
-	}
-
-	public VRPNodeGameObject Depot {
-		get {
-			return this.depot;
-		}
-		set {
-			depot = value;
-		}
-	}
-		
 
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public VRP(VRPGraph pGraph, List<VRPVehicle> pVehicles, VRPNodeGameObject pDepot):this(pGraph, pVehicles, pDepot, new List<VRPNodeGameObject>()){}
-	public VRP(VRPGraph pGraph, List<VRPVehicle> pVehicles, VRPNodeGameObject pDepot, List<VRPNodeGameObject> go){
-		nodeGOs = go;
-		graph = pGraph;
-		vehicles = pVehicles;
-		depot = pDepot;
+	public Ant(T pTheObject){
+		theObject = pTheObject;
 	}
+
 
 	//--------------------------------------
 	// Overriden Methods
 	//--------------------------------------
 	public override string ToString ()
 	{
-		return string.Format ("[VRP: graph={0}, vehicles={1}, depots={2}]", graph, vehicles, depot);
+		return string.Format ("[Ant: theObject={0}]", theObject);
 	}
 	
 }

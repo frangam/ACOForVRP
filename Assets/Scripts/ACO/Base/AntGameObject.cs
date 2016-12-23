@@ -21,28 +21,60 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AntGameObject : MonoBehaviour {
+public class AntGameObject<T> : MonoBehaviour {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
-	private Ant ant;
+	private Ant<T> ant;
+
+	[SerializeField]
+	private float movSpeed = 0.5f;
+
+	//--------------------------------------
+	// Private Attributes
+	//--------------------------------------
+	private Transform depot;
+	private Transform destination;
+	private bool canMove = false;
+	private bool isCommingBack = false;
 
 	//--------------------------------------
 	// Unity Methods
 	//--------------------------------------
-	void Start () {
+	protected virtual void Awake(){
+
+	}
+
+	protected virtual void Start () {
 		
 	}
 
-	void FixedUpdate () {
-		
+	protected virtual void FixedUpdate () {
+		if (canMove) {
+			transform.position = Vector3.MoveTowards (transform.position, destination.position, Time.deltaTime * movSpeed);
+			transform.rotation = Quaternion.LookRotation(Vector3.forward, destination.position - transform.position);
+			bool targetReached = Vector3.Distance (transform.position, destination.position) <= 0.1f;
+
+			if (isCommingBack && targetReached) { //arrived to depot
+				isCommingBack = false;
+				Destroy (gameObject);
+			} else if (!isCommingBack && targetReached) { //come back to the depot
+				isCommingBack = true;
+				destination = depot;
+			}
+		}
 	}
 
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
-	public void loadAnt(Ant a){
+	public virtual void loadAnt(Ant<T> a, Transform pDestination, float pSpeed, Transform pDepot){
 		ant = a;
+		destination = pDestination;
+		canMove = true;
+		isCommingBack = false;
+		movSpeed = pSpeed;
+		depot = pDepot;
 	}
 }
