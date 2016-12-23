@@ -17,36 +17,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-[System.Serializable]
-public class VRPNode: Node {
-	public const int MIN_DEMAND = 1;
+public class AntGameObject : MonoBehaviour {
+	private Ant ant;
 
-	private int demand = MIN_DEMAND; //valor no negativo
-
-	public int Demand {
-		get {
-			return this.demand;
-		}
-		set {
-			demand = Mathf.Clamp(value,MIN_DEMAND,int.MaxValue);
-		}
+	// Use this for initialization
+	void Start () {
+		
+	}
+	
+	// Update is called once per frame
+	void FixedUpdate () {
+		
 	}
 
-	public VRPNode():base(){
-		Demand = MIN_DEMAND;
-	}
-	public VRPNode(VRPNode n):base(n){
-		Demand = n.Demand;
-	}
-	public VRPNode(string name, int x, int y, bool visited, int pDemand):base(name, x, y, visited){
-		Demand = pDemand; 
-	}
-
-	public override string ToString ()
-	{
-		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, demand={4}]", Name, X, Y, Visited, Demand);
+	public void loadAnt(Ant a){
+		ant = a;
 	}
 }
