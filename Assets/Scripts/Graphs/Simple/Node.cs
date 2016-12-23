@@ -22,6 +22,9 @@ using System.Collections;
 
 [System.Serializable]
 public class Node {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private string id;
 
@@ -37,6 +40,9 @@ public class Node {
 	[SerializeField]
 	private bool visited = false;
 
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public string Id {
 		get {
 			return this.id;
@@ -82,6 +88,9 @@ public class Node {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public Node():this("","",0,0,false){}
 	public Node(Node n):this(n.id, n.name, n.x, n.y, n.visited){}
 	public Node(int pX, int pY):this("","",pX,pY,false){}
@@ -95,6 +104,9 @@ public class Node {
 		visited = pVisited;
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[Node: name={0}, x={1}, y={2}, visited={3}]", name, x, y, visited);

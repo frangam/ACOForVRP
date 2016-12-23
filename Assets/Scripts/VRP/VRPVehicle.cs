@@ -23,14 +23,23 @@ using UnityEngine;
 
 [System.Serializable]
 public class VRPVehicle {
+	//--------------------------------------
+	// Constants
+	//--------------------------------------
 	public const int MIN_QUANTITY = 1;
 
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private string id;
 
 	[SerializeField]
 	private int quantity=1;
 
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public string Id {
 		get {
 			return this.id;
@@ -49,6 +58,9 @@ public class VRPVehicle {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public VRPVehicle():this("", MIN_QUANTITY){}
 	public VRPVehicle(VRPVehicle v):this(v.Id, v.Quantity){}
 	public VRPVehicle(string pID, int pQuantity){
@@ -56,6 +68,9 @@ public class VRPVehicle {
 		Quantity = pQuantity;
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[VRPVehicle: id={0}, quantity={1}]", id, quantity);

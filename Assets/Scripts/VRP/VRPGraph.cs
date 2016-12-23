@@ -23,6 +23,9 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class VRPGraph: WeightedGraph<VRPNode, VRPEdge> {
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public VRPGraph():base(){}
 	public VRPGraph(List<VRPNode> nodes, List<VRPEdge> edges): base(nodes, edges, true){} //is a complete graph
 }

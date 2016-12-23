@@ -23,9 +23,15 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class WEdge : Edge {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private int weight;
 
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public int Weight {
 		get {
 			return this.weight;
@@ -35,6 +41,9 @@ public class WEdge : Edge {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public WEdge():base(){
 		weight = 0;
 	}
@@ -47,6 +56,9 @@ public class WEdge : Edge {
 		weight = pWeight;
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[WEdge: nodeA={0}, nodeB={1}, weight={2}]", NodeA, NodeB, weight);

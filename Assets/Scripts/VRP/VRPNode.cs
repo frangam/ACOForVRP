@@ -22,15 +22,23 @@ using System.Collections;
 
 [System.Serializable]
 public class VRPNode: Node {
+	//--------------------------------------
+	// Constants
+	//--------------------------------------
 	public const int MIN_DEMAND = 1;
 
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private bool isDepot = false;
 
 	[SerializeField]
 	private int demand = MIN_DEMAND; //valor no negativo
 
-
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public bool IsDepot {
 		get {
 			return this.isDepot;
@@ -49,6 +57,9 @@ public class VRPNode: Node {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public VRPNode():this("","",0,0,false,false,MIN_DEMAND){}
 	public VRPNode(VRPNode n):this(n.Id,n.Name, n.X, n.Y, n.Visited, false, n.Demand){}
 	public VRPNode(string id, int pDemand):this(id, id, 0, 0, false, false, pDemand){}
@@ -58,6 +69,9 @@ public class VRPNode: Node {
 		Demand = pDemand; 
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, isDepot={4}, demand={5}]", Name, X, Y, Visited, IsDepot, Demand);

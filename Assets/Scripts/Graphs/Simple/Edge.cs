@@ -23,6 +23,9 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class Edge {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private string id;
 
@@ -35,6 +38,9 @@ public class Edge {
 	[SerializeField]
 	private Node nodeB;
 
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public string Id {
 		get {
 			return this.id;
@@ -70,14 +76,16 @@ public class Edge {
 			nodeB = value;
 		}
 	}
-
-
+		
 	public float EuclideanDistance{
 		get{
 			return Mathf.Sqrt (Mathf.Pow(nodeB.X - nodeA.X,2) + Mathf.Pow(nodeB.Y - nodeA.Y,2));
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public Edge():this(new Node (), new Node ()){}
 	public Edge(Node a, Node b):this(a.Id+"-"+b.Id, a.Id+"-"+b.Id, a, b){}
 	public Edge(string pId, Node a, Node b):this(pId, a.Id+"-"+b.Id, a, b){}
@@ -88,6 +96,9 @@ public class Edge {
 		nodeB = b;
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[Edge: id={0}, name={1}, nodeA={2}, nodeB={3}]", id, name, nodeA, nodeB);

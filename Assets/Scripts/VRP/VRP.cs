@@ -23,13 +23,18 @@ using UnityEngine;
 
 [System.Serializable]
 public class VRP {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private VRPGraph graph;
 
 	[SerializeField]
 	private List<VRPVehicle> vehicles;
 
-
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public VRPGraph Graph {
 		get {
 			return this.graph;
@@ -48,11 +53,17 @@ public class VRP {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public VRP(VRPGraph pGraph, List<VRPVehicle> pVehicles){
 		graph = pGraph;
 		vehicles = pVehicles;
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[VRP: graph={0}, vehicles={1}]", graph, vehicles);

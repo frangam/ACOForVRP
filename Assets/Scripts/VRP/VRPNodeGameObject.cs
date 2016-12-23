@@ -22,14 +22,22 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class VRPNodeGameObject : MonoBehaviour {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private VRPNode node;
 
-	// Use this for initialization
+	//--------------------------------------
+	// Unity Methods
+	//--------------------------------------
 	void Start () {
 		
 	}
 
+	//--------------------------------------
+	// Public Methods
+	//--------------------------------------
 	public void loadNode(VRPNode n){
 		node = n;
 	}

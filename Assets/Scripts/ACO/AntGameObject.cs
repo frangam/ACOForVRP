@@ -22,18 +22,26 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AntGameObject : MonoBehaviour {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
+	[SerializeField]
 	private Ant ant;
 
-	// Use this for initialization
+	//--------------------------------------
+	// Unity Methods
+	//--------------------------------------
 	void Start () {
 		
 	}
-	
-	// Update is called once per frame
+
 	void FixedUpdate () {
 		
 	}
 
+	//--------------------------------------
+	// Public Methods
+	//--------------------------------------
 	public void loadAnt(Ant a){
 		ant = a;
 	}

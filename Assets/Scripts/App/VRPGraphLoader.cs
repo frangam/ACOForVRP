@@ -25,6 +25,9 @@ using UnityEngine;
 using System.IO;
 
 public class VRPGraphLoader : MonoBehaviour {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private VRPNodeGameObject depot;
 
@@ -55,6 +58,15 @@ public class VRPGraphLoader : MonoBehaviour {
 	[SerializeField]
 	private VRP vrp;
 
+	//--------------------------------------
+	// Events
+	//--------------------------------------
+	public delegate void VRPLoaded (VRP vrp);
+	public static event VRPLoaded OnVRPLoaded;
+
+	//--------------------------------------
+	// Unity Methods
+	//--------------------------------------
 	void Awake () {
 		DirectoryInfo di = new DirectoryInfo ("Assets/Resources");
 		FileInfo[] files = di.GetFiles (graphFileNamePrefx+"*.txt"); //avoiding .meta files
@@ -63,13 +75,13 @@ public class VRPGraphLoader : MonoBehaviour {
 		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
 		string fileContent = ta.text; //the graph file content
 		vrp = processVRPProblemFileContent (fileContent); //create the vrp graph
-
-		//TODO for testing
 		spawnNodes (vrp.Graph.Nodes.Where( x => !x.IsDepot).ToList<VRPNode>(), depot.transform.position);
-//		spawnNodes (new List<VRPNode>(){new VRPNode(), new VRPNode(), new VRPNode(), new VRPNode(), new VRPNode()
-//			,new VRPNode(),new VRPNode(),new VRPNode(),new VRPNode(),new VRPNode()}, depot.position);
+		OnVRPLoaded (vrp); //dispatch event
 	}
 
+	//--------------------------------------
+	// Private Methods
+	//--------------------------------------
 	private VRP processVRPProblemFileContent(string content){
 		string[] data = content.Split(new string[] {"CUSTOMERS_NODES:"}, System.StringSplitOptions.None);
 		string[] data2 = data[1].Split(new string[] {"\nVEHICLES:"}, System.StringSplitOptions.None);

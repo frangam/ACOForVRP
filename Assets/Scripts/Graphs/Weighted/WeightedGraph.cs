@@ -23,6 +23,9 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class WeightedGraph<N,E> : Graph<N,E> {
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public WeightedGraph():base(){}
 	public WeightedGraph(List<N> nodes, List<E> edges): base(nodes, edges){}
 	public WeightedGraph(List<N> nodes, List<E> edges, bool isComplete): base(nodes, edges, isComplete){}

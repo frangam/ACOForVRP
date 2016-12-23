@@ -23,6 +23,9 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class Graph<N, E> {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private List<N> nodes;
 
@@ -32,6 +35,9 @@ public class Graph<N, E> {
 	[SerializeField]
 	private bool isComplete;
 
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public List<N> Nodes {
 		get {
 			return this.nodes;
@@ -59,6 +65,9 @@ public class Graph<N, E> {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public Graph():this(new List<N> (), new List<E> (), false){}
 	public Graph(Graph<N,E> g):this(g.Nodes, g.Edges, g.IsComplete){}
 	public Graph(List<N> pNodes, List<E> pEdges):this(pNodes, pEdges, false){}
@@ -66,6 +75,14 @@ public class Graph<N, E> {
 		nodes = pNodes;
 		edges = pEdges;
 		isComplete = pIsComplete;
+	}
+
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
+	public override string ToString ()
+	{
+		return string.Format ("[Graph: nodes={0}, edges={1}, isComplete={2}]", nodes, edges, isComplete);
 	}
 }
 

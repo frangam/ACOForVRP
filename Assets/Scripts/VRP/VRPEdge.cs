@@ -22,10 +22,15 @@ using System.Collections;
 
 [System.Serializable]
 public class VRPEdge : WEdge {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
 	[SerializeField]
 	private float pheromone;
 
-
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
 	public float Pheromone {
 		get {
 			return this.pheromone;
@@ -35,10 +40,16 @@ public class VRPEdge : WEdge {
 		}
 	}
 
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
 	public VRPEdge(Node a, Node b, int pWeight, float pPheromone):base(a, b, pWeight){
 		pheromone = pPheromone;
 	}
 
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
 	public override string ToString ()
 	{
 		return string.Format ("[VRPEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, pheromone);
