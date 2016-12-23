@@ -29,10 +29,16 @@ public class VRPGraphLoader : MonoBehaviour {
 	private VRPNodeGameObject depot;
 
 	[SerializeField]
-	private string graphFileNamePrefx="graph";
+	private bool symetricDistance = true;
 
 	[SerializeField]
-	private VRPNodeGameObject pbNode;
+	private bool avoidCycleSameNode = true;
+
+	[SerializeField]
+	private float pheromone = 0.001f;
+
+	[SerializeField]
+	private string graphFileNamePrefx="graph";
 
 	[SerializeField]
 	private float minSpawnRadius = 1f;
@@ -42,6 +48,9 @@ public class VRPGraphLoader : MonoBehaviour {
 
 	[SerializeField]
 	private bool randomRadius = false;
+
+	[SerializeField]
+	private VRPNodeGameObject pbNode;
 
 	[SerializeField]
 	private VRP vrp;
@@ -79,6 +88,15 @@ public class VRPGraphLoader : MonoBehaviour {
 		this.depot.loadNode (depotNode); //load depot node
 		nodes.Add(depotNode);
 
+		//vehicles
+		for (int i = 2; i < vehiclesSettings.Length; i++) {
+			string c = vehiclesSettings [i];
+			if (c != "" && c !="\n" && c!="\r" && c!="\t") {
+				string[] values = c.Split (new string[] { "\t" }, System.StringSplitOptions.None);
+				vehicles.Add (new VRPVehicle (values[0], Int32.Parse(values [3])));
+			}
+		}
+
 		//nodes (customers)
 		for (int i=2; i<customers.Length; i++) {
 			string c = customers [i];
@@ -87,6 +105,31 @@ public class VRPGraphLoader : MonoBehaviour {
 				nodes.Add (new VRPNode (values[0], Int32.Parse(values [2])));
 			}
 		}
+
+		//edges
+		for (int i=2; i<edgesCosts.Length; i++) {
+			string c = edgesCosts [i];
+			if (c != "" && c !="\n" && c!="\r" && c!="\t" && c!="END\r") {
+				string[] values = c.Split (new string[] { "\t" }, System.StringSplitOptions.None);
+				string nodeA = values [0];
+				string nodeB = values [1];
+
+				if (!nodeA.Equals(nodeB) || (nodeA.Equals(nodeB) && !avoidCycleSameNode)) {
+					int cost = Int32.Parse (values [2]);
+					VRPEdge symetricEdge = edges.Find (e => e.NodeA.Id.Equals (nodeB) && e.NodeB.Id.Equals (nodeA));
+
+					if (symetricEdge != null) {
+						if (symetricDistance)
+							edges.Add (new VRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, pheromone));
+						else
+							edges.Add (new VRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, pheromone));
+					} else {
+						edges.Add (new VRPEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, pheromone));
+					}
+				}
+			}
+		}
+
 
 		graph = new VRPGraph(nodes, edges);
 

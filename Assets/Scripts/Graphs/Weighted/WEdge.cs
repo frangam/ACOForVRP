@@ -21,6 +21,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
 public class WEdge : Edge {
 	[SerializeField]
 	private int weight;

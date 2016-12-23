@@ -24,8 +24,21 @@ using UnityEngine;
 [System.Serializable]
 public class VRPVehicle {
 	public const int MIN_QUANTITY = 1;
+
+	[SerializeField]
+	private string id;
+
 	[SerializeField]
 	private int quantity=1;
+
+	public string Id {
+		get {
+			return this.id;
+		}
+		set {
+			id = value;
+		}
+	}
 
 	public int Quantity {
 		get {
@@ -36,15 +49,16 @@ public class VRPVehicle {
 		}
 	}
 
-	public VRPVehicle():this(MIN_QUANTITY){}
-	public VRPVehicle(VRPVehicle v):this(v.Quantity){}
-	public VRPVehicle(int pQuantity){
+	public VRPVehicle():this("", MIN_QUANTITY){}
+	public VRPVehicle(VRPVehicle v):this(v.Id, v.Quantity){}
+	public VRPVehicle(string pID, int pQuantity){
+		id = pID;
 		Quantity = pQuantity;
 	}
 
 	public override string ToString ()
 	{
-		return string.Format ("[VRPVehicle: quantity={0}]", quantity);
+		return string.Format ("[VRPVehicle: id={0}, quantity={1}]", id, quantity);
 	}
 	
 }

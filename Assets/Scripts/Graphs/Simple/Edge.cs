@@ -23,8 +23,35 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class Edge {
+	[SerializeField]
+	private string id;
+
+	[SerializeField]
+	private string name;
+
+	[SerializeField]
 	private Node nodeA;
+
+	[SerializeField]
 	private Node nodeB;
+
+	public string Id {
+		get {
+			return this.id;
+		}
+		set {
+			id = value;
+		}
+	}
+
+	public string Name {
+		get {
+			return this.name;
+		}
+		set {
+			name = value;
+		}
+	}
 
 	public Node NodeA {
 		get {
@@ -51,19 +78,19 @@ public class Edge {
 		}
 	}
 
-	public Edge(){
-		nodeA = new Node ();
-		nodeB = new Node ();
-	}
-
-	public Edge(Node a, Node b){
+	public Edge():this(new Node (), new Node ()){}
+	public Edge(Node a, Node b):this(a.Id+"-"+b.Id, a.Id+"-"+b.Id, a, b){}
+	public Edge(string pId, Node a, Node b):this(pId, a.Id+"-"+b.Id, a, b){}
+	public Edge(string pId, string pName, Node a, Node b){
+		id = pId;
+		name = pName;
 		nodeA = a;
 		nodeB = b;
 	}
 
 	public override string ToString ()
 	{
-		return string.Format ("[Edge: nodeA={0}, nodeB={1}]", nodeA, nodeB);
+		return string.Format ("[Edge: id={0}, name={1}, nodeA={2}, nodeB={3}]", id, name, nodeA, nodeB);
 	}
 	
 }

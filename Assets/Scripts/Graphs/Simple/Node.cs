@@ -20,7 +20,11 @@
 using UnityEngine;
 using System.Collections;
 
+[System.Serializable]
 public class Node {
+	[SerializeField]
+	private string id;
+
 	[SerializeField]
 	private string name;
 
@@ -32,6 +36,15 @@ public class Node {
 
 	[SerializeField]
 	private bool visited = false;
+
+	public string Id {
+		get {
+			return this.id;
+		}
+		set {
+			id = value;
+		}
+	}
 
 	public string Name {
 		get {
@@ -69,11 +82,13 @@ public class Node {
 		}
 	}
 
-	public Node():this("",0,0,false){}
-	public Node(Node n):this(){}
-	public Node(int pX, int pY):this("",pX,pY,false){}
-	public Node(int pX, int pY, bool pVisited):this("",pX,pY,pVisited){}
-	public Node(string pName, int pX, int pY, bool pVisited){
+	public Node():this("","",0,0,false){}
+	public Node(Node n):this(n.id, n.name, n.x, n.y, n.visited){}
+	public Node(int pX, int pY):this("","",pX,pY,false){}
+	public Node(int pX, int pY, bool pVisited):this("","",pX,pY,pVisited){}
+	public Node(string pId, int pX, int pY, bool pVisited):this(pId,"",pX,pY,pVisited){}
+	public Node(string pId, string pName, int pX, int pY, bool pVisited){
+		id = pId;
 		name = pName;
 		x = pX;
 		y = pY;

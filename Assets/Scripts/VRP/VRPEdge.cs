@@ -20,6 +20,7 @@
 using UnityEngine;
 using System.Collections;
 
+[System.Serializable]
 public class VRPEdge : WEdge {
 	[SerializeField]
 	private float pheromone;
