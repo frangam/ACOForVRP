@@ -17,10 +17,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
-public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOEdge> {
+[System.Serializable]
+public class ACOEdge : WEdge {
+	//--------------------------------------
+	// Setting Attributes
+	//--------------------------------------
+	[SerializeField]
+	private float pheromone;
+
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
+	public float Pheromone {
+		get {
+			return this.pheromone;
+		}
+		set {
+			pheromone = value;
+		}
+	}
+
+	//--------------------------------------
+	// Constructors
+	//--------------------------------------
+	public ACOEdge(Node a, Node b, int pWeight, float pPheromone):base(a, b, pWeight){
+		pheromone = pPheromone;
+	}
+
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
+	public override string ToString ()
+	{
+		return string.Format ("[VRPEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, pheromone);
+	}
 	
 }

@@ -21,11 +21,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VRPAnt : Ant<VRPVehicle> {
+public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOEdge> {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
 	public VRPAnt(VRPVehicle v):base(v){
 		
+	}
+
+	//--------------------------------------
+	// Overriden Methods
+	//--------------------------------------
+	public override void createRoute (Graph<VRPNode, ACOEdge> graph, VRPNode from, VRPNode to)
+	{
+		RouteProcessingTimeCost += to.ProcessingTime;
+		base.createRoute (graph, from, to);
 	}
 }

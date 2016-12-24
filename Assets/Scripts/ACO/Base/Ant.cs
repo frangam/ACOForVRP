@@ -17,17 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class Ant<T> {
+public class Ant<T,N,E> where N:Node where E:ACOEdge {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
 	private T theObject;
+
+	//--------------------------------------
+	// Private Attributes
+	//--------------------------------------
+	private List<E> routes;
+	private int routeDistanceCost;
+	private int routeProcessingTimeCost;
 
 	//--------------------------------------
 	// Getters & Setters
@@ -41,12 +49,61 @@ public class Ant<T> {
 		}
 	}
 
+	public List<E> Routes {
+		get {
+			return this.routes;
+		}
+		set{
+			this.routes = value;
+		}
+	}
+
+	public int RouteDistanceCost {
+		get {
+			return this.routeDistanceCost;
+		}
+		set {
+			routeDistanceCost = value;
+		}
+	}
+
+	public int RouteProcessingTimeCost {
+		get {
+			return this.routeProcessingTimeCost;
+		}
+		set {
+			routeProcessingTimeCost = value;
+		}
+	}
+
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
 	public Ant(T pTheObject){
 		theObject = pTheObject;
+		routeDistanceCost = 0;
+		routeProcessingTimeCost = 0;
+		routes = new List<E>();
 	}
+
+	//--------------------------------------
+	// Public Methods
+	//--------------------------------------
+
+
+	//--------------------------------------
+	// Virtual Methods
+	//--------------------------------------
+	public virtual void createRoute(Graph<N, E> graph, N from, N to){
+		E edge = graph.Edges.Find (e => e.NodeA.Id.Equals(from.Id) && e.NodeB.Id.Equals(to.Id));
+		routeDistanceCost += edge.Weight;
+		routes.Add(edge);
+		ACOSolver.Instance.pheromoneLocalUpdate (edge.Pheromone);
+	}
+
+	//--------------------------------------
+	// Private Methods
+	//--------------------------------------
 
 
 	//--------------------------------------

@@ -19,40 +19,43 @@
  */
 using UnityEngine;
 using System.Collections;
-
-[System.Serializable]
-public class VRPEdge : WEdge {
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-	[SerializeField]
-	private float pheromone;
-
-	//--------------------------------------
-	// Getters & Setters
-	//--------------------------------------
-	public float Pheromone {
+ 
+/// <summary>
+/// Singleton pattern for object we want to exist only in the current Scene
+/// </summary>
+public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour {
+	private static T _instance = null;
+	
+	
+	public static T Instance {
 		get {
-			return this.pheromone;
+			if (_instance == null) {
+				_instance = GameObject.FindObjectOfType(typeof(T)) as T;
+				if (_instance == null) {
+					_instance = new GameObject ().AddComponent<T> ();
+					_instance.gameObject.name = _instance.GetType ().Name;
+				}
+			}
+			
+			return _instance;
+			
 		}
-		set {
-			pheromone = value;
-		}
-	}
-
-	//--------------------------------------
-	// Constructors
-	//--------------------------------------
-	public VRPEdge(Node a, Node b, int pWeight, float pPheromone):base(a, b, pWeight){
-		pheromone = pPheromone;
-	}
-
-	//--------------------------------------
-	// Overriden Methods
-	//--------------------------------------
-	public override string ToString ()
-	{
-		return string.Format ("[VRPEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, pheromone);
+		
 	}
 	
+	public static bool HasInstance {
+		get {
+			return !IsDestroyed;
+		}
+	}
+	
+	public static bool IsDestroyed {
+		get {
+			if(_instance == null) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
 }

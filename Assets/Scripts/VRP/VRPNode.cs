@@ -36,6 +36,9 @@ public class VRPNode: Node {
 	[SerializeField]
 	private int demand = MIN_DEMAND; //valor no negativo
 
+	[SerializeField]
+	private int processingTime;
+
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
@@ -57,16 +60,27 @@ public class VRPNode: Node {
 		}
 	}
 
+	public int ProcessingTime {
+		get {
+			return this.processingTime;
+		}
+		set {
+			processingTime = value;
+		}
+	}
+
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public VRPNode():this("","",0,0,false,false,MIN_DEMAND){}
-	public VRPNode(VRPNode n):this(n.Id,n.Name, n.X, n.Y, n.Visited, false, n.Demand){}
-	public VRPNode(string id, int pDemand):this(id, id, 0, 0, false, false, pDemand){}
-	public VRPNode(string id, bool pIsDepot, int pDemand):this(id,id, 0, 0, false, pIsDepot, pDemand){}
-	public VRPNode(string id, string name, int x, int y, bool visited, bool pIsDepot, int pDemand):base(id,name, x, y, visited){
+	public VRPNode():this("","",0,0,false,false,MIN_DEMAND,0){}
+	public VRPNode(VRPNode n):this(n.Id,n.Name, n.X, n.Y, n.Visited, false, n.Demand, 0){}
+	public VRPNode(string id, int pDemand):this(id, id, 0, 0, false, false, pDemand, 0){}
+	public VRPNode(string id, int pDemand, int pProcTime):this(id, id, 0, 0, false, false, pDemand, pProcTime){}
+	public VRPNode(string id, bool pIsDepot, int pDemand):this(id,id, 0, 0, false, pIsDepot, pDemand, 0){}
+	public VRPNode(string id, string name, int x, int y, bool visited, bool pIsDepot, int pDemand, int pProcTime):base(id,name, x, y, visited){
 		isDepot = pIsDepot;
-		Demand = pDemand; 
+		Demand = pDemand;
+		processingTime = pProcTime;
 	}
 
 	//--------------------------------------
@@ -74,6 +88,6 @@ public class VRPNode: Node {
 	//--------------------------------------
 	public override string ToString ()
 	{
-		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, isDepot={4}, demand={5}]", Name, X, Y, Visited, IsDepot, Demand);
+		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, isDepot={4}, demand={5}, processingTime={6}]", Name, X, Y, Visited, IsDepot, Demand, processingTime);
 	}
 }

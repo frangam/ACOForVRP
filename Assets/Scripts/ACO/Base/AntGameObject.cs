@@ -21,12 +21,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AntGameObject<T> : MonoBehaviour {
+public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
-	private Ant<T> ant;
+	private Ant<T,N,E> ant;
 
 	[SerializeField]
 	private float movSpeed = 0.5f;
@@ -69,7 +69,7 @@ public class AntGameObject<T> : MonoBehaviour {
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
-	public virtual void loadAnt(Ant<T> a, Transform pDestination, float pSpeed, Transform pDepot){
+	public virtual void loadAnt(Ant<T,N,E> a, Transform pDestination, float pSpeed, Transform pDepot){
 		ant = a;
 		destination = pDestination;
 		canMove = true;
@@ -77,4 +77,6 @@ public class AntGameObject<T> : MonoBehaviour {
 		movSpeed = pSpeed;
 		depot = pDepot;
 	}
+
+
 }

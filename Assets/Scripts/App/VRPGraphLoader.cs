@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-public class VRPGraphLoader : MonoBehaviour {
+public class VRPGraphLoader : Singleton<VRPGraphLoader> {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -38,7 +38,7 @@ public class VRPGraphLoader : MonoBehaviour {
 	private bool avoidCycleSameNode = true;
 
 	[SerializeField]
-	private float pheromone = 0.001f;
+	private float initialPheromone = 0.001f;
 
 	[SerializeField]
 	private string graphFileNamePrefx="graph";
@@ -63,6 +63,15 @@ public class VRPGraphLoader : MonoBehaviour {
 	//--------------------------------------
 	public delegate void VRPLoaded (VRP vrp);
 	public static event VRPLoaded OnVRPLoaded;
+
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
+	public float InitialPheromone {
+		get {
+			return this.initialPheromone;
+		}
+	}
 
 	//--------------------------------------
 	// Unity Methods
@@ -92,12 +101,12 @@ public class VRPGraphLoader : MonoBehaviour {
 		string[] edgesCosts = data3 [1].Split(new string[] {"\n"}, System.StringSplitOptions.None);
 		string[] vehiclesSettings = data3 [0].Split(new string[] {"\n"}, System.StringSplitOptions.None);
 		List<VRPNode> nodes = new List<VRPNode> ();
-		List<VRPEdge> edges = new List<VRPEdge>();
+		List<ACOEdge> edges = new List<ACOEdge>();
 		List<VRPVehicle> vehicles = new List<VRPVehicle>();
 		VRPGraph graph = null;
 		//depot
 		string[] depotValues = depots[2].Split(new string[] {"\t"}, System.StringSplitOptions.None);
-		VRPNode depotNode = new VRPNode (depotValues [0], true, Int32.Parse(depotValues [2]));
+		VRPNode depotNode = new VRPNode (depotValues [0], true, Int32.Parse(depotValues [2])*(-1));
 		this.depot.loadNode (depotNode); //load depot node
 		nodes.Add(depotNode);
 
@@ -115,7 +124,7 @@ public class VRPGraphLoader : MonoBehaviour {
 			string c = customers [i];
 			if (c != "" && c !="\n" && c!="\r" && c!="\t") {
 				string[] values = c.Split (new string[] { "\t" }, System.StringSplitOptions.None);
-				VRPNode n = new VRPNode (values [0], Int32.Parse (values [2]));
+				VRPNode n = new VRPNode (values [0], Int32.Parse (values [2]), Int32.Parse (values [3]));
 				nodes.Add (n);
 			}
 		}
@@ -130,15 +139,15 @@ public class VRPGraphLoader : MonoBehaviour {
 
 				if (!nodeA.Equals(nodeB) || (nodeA.Equals(nodeB) && !avoidCycleSameNode)) {
 					int cost = Int32.Parse (values [2]);
-					VRPEdge symetricEdge = edges.Find (e => e.NodeA.Id.Equals (nodeB) && e.NodeB.Id.Equals (nodeA));
+					ACOEdge symetricEdge = edges.Find (e => e.NodeA.Id.Equals (nodeB) && e.NodeB.Id.Equals (nodeA));
 
 					if (symetricEdge != null) {
 						if (symetricDistance)
-							edges.Add (new VRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, pheromone));
+							edges.Add (new ACOEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, initialPheromone));
 						else
-							edges.Add (new VRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, pheromone));
+							edges.Add (new ACOEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, initialPheromone));
 					} else {
-						edges.Add (new VRPEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, pheromone));
+						edges.Add (new ACOEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, initialPheromone));
 					}
 				}
 			}
