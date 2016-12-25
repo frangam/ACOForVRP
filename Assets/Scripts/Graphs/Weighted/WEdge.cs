@@ -22,7 +22,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 [System.Serializable]
-public class WEdge : Edge {
+public class WEdge<N> : Edge<N> where N:Node {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -44,15 +44,7 @@ public class WEdge : Edge {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public WEdge():base(){
-		weight = 0;
-	}
-
-	public WEdge(int pWeight):base(){
-		weight = pWeight;
-	}
-
-	public WEdge(Node a, Node b, int pWeight):base(a, b){
+	public WEdge(N a, N b, int pWeight):base(a, b){
 		weight = pWeight;
 	}
 

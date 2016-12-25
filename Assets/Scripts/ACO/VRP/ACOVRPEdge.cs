@@ -19,80 +19,24 @@
  */
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 [System.Serializable]
-public class Edge<N> where N:Node {
+public class ACOVRPEdge : ACOEdge<VRPNode>  {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
-	[SerializeField]
-	private string id;
 
-	[SerializeField]
-	private string name;
-
-	[SerializeField]
-	private N nodeA;
-
-	[SerializeField]
-	private N nodeB;
 
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
-	public string Id {
-		get {
-			return this.id;
-		}
-		set {
-			id = value;
-		}
-	}
 
-	public string Name {
-		get {
-			return this.name;
-		}
-		set {
-			name = value;
-		}
-	}
-
-	public N NodeA {
-		get {
-			return this.nodeA;
-		}
-		set {
-			nodeA = value;
-		}
-	}
-
-	public N NodeB {
-		get {
-			return this.nodeB;
-		}
-		set {
-			nodeB = value;
-		}
-	}
-		
-	public float EuclideanDistance{
-		get{
-			return Mathf.Sqrt (Mathf.Pow(nodeB.X - nodeA.X,2) + Mathf.Pow(nodeB.Y - nodeA.Y,2));
-		}
-	}
 
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public Edge(N a, N b):this(a.Id+"-"+b.Id, a.Id+"-"+b.Id, a, b){}
-	public Edge(string pId, N a, N b):this(pId, a.Id+"-"+b.Id, a, b){}
-	public Edge(string pId, string pName, N a, N b){
-		id = pId;
-		name = pName;
-		nodeA = a;
-		nodeB = b;
+	public ACOVRPEdge(VRPNode a, VRPNode b, int pWeight, float pPheromone):base(a, b, pWeight, pPheromone){
+		
 	}
 
 	//--------------------------------------
@@ -100,7 +44,7 @@ public class Edge<N> where N:Node {
 	//--------------------------------------
 	public override string ToString ()
 	{
-		return string.Format ("[Edge: id={0}, name={1}, nodeA={2}, nodeB={3}]", id, name, nodeA, nodeB);
+		return string.Format ("[ACOVRPEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, Pheromone);
 	}
 	
 }

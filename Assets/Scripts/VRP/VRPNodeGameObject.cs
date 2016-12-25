@@ -29,6 +29,15 @@ public class VRPNodeGameObject : MonoBehaviour {
 	private VRPNode node;
 
 	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
+	public VRPNode Node {
+		get {
+			return this.node;
+		}
+	}
+
+	//--------------------------------------
 	// Unity Methods
 	//--------------------------------------
 	void Start () {

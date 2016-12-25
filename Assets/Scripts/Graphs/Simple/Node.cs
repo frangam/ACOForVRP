@@ -32,10 +32,10 @@ public class Node {
 	private string name;
 
 	[SerializeField]
-	private int x;
+	private float x;
 
 	[SerializeField]
-	private int y;
+	private float y;
 
 	[SerializeField]
 	private bool visited = false;
@@ -61,7 +61,7 @@ public class Node {
 		}
 	}
 
-	public int X {
+	public float X {
 		get {
 			return this.x;
 		}
@@ -70,7 +70,7 @@ public class Node {
 		}
 	}
 
-	public int Y {
+	public float Y {
 		get {
 			return this.y;
 		}
@@ -93,10 +93,10 @@ public class Node {
 	//--------------------------------------
 	public Node():this("","",0,0,false){}
 	public Node(Node n):this(n.id, n.name, n.x, n.y, n.visited){}
-	public Node(int pX, int pY):this("","",pX,pY,false){}
-	public Node(int pX, int pY, bool pVisited):this("","",pX,pY,pVisited){}
-	public Node(string pId, int pX, int pY, bool pVisited):this(pId,"",pX,pY,pVisited){}
-	public Node(string pId, string pName, int pX, int pY, bool pVisited){
+	public Node(float pX, float pY):this("","",pX,pY,false){}
+	public Node(float pX, float pY, bool pVisited):this("","",pX,pY,pVisited){}
+	public Node(string pId, float pX, float pY, bool pVisited):this(pId,"",pX,pY,pVisited){}
+	public Node(string pId, string pName, float pX, float pY, bool pVisited){
 		id = pId;
 		name = pName;
 		x = pX;

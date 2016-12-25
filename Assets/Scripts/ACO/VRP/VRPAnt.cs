@@ -17,11 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOEdge> {
+public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
@@ -32,9 +33,17 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOEdge> {
 	//--------------------------------------
 	// Overriden Methods
 	//--------------------------------------
-	public override void createRoute (Graph<VRPNode, ACOEdge> graph, VRPNode from, VRPNode to)
+	public override void createRoute (Graph<VRPNode, ACOVRPEdge> graph, VRPNode from, VRPNode to)
 	{
 		RouteProcessingTimeCost += to.ProcessingTime;
 		base.createRoute (graph, from, to);
+	}
+
+	protected override bool checkConditionToAddNodeToCompleteTour (List<VRPNode> allNodes, VRPNode nodeToAdd)
+	{
+		int totalDepotsInTour = allNodes.Where (d => d.IsDepot).Count<VRPNode> ();
+
+		//only we can add a node if this is not present in the current tour or if it is the depot first time (start of the tour) or the second (end of the tour)
+		return (nodeToAdd.IsDepot && totalDepotsInTour < 2) || base.checkConditionToAddNodeToCompleteTour (allNodes, nodeToAdd);
 	}
 }

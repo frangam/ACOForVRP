@@ -17,11 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
-public class ACOEdge : WEdge {
+public class ACOEdge<N> : WEdge<N> where N:Node {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -43,7 +44,7 @@ public class ACOEdge : WEdge {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public ACOEdge(Node a, Node b, int pWeight, float pPheromone):base(a, b, pWeight){
+	public ACOEdge(N a, N b, int pWeight, float pPheromone):base(a, b, pWeight){
 		pheromone = pPheromone;
 	}
 
@@ -52,7 +53,6 @@ public class ACOEdge : WEdge {
 	//--------------------------------------
 	public override string ToString ()
 	{
-		return string.Format ("[VRPEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, pheromone);
+		return string.Format ("[ACOEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, pheromone);
 	}
-	
 }

@@ -77,7 +77,7 @@ public class VRPNode: Node {
 	public VRPNode(string id, int pDemand):this(id, id, 0, 0, false, false, pDemand, 0){}
 	public VRPNode(string id, int pDemand, int pProcTime):this(id, id, 0, 0, false, false, pDemand, pProcTime){}
 	public VRPNode(string id, bool pIsDepot, int pDemand):this(id,id, 0, 0, false, pIsDepot, pDemand, 0){}
-	public VRPNode(string id, string name, int x, int y, bool visited, bool pIsDepot, int pDemand, int pProcTime):base(id,name, x, y, visited){
+	public VRPNode(string id, string name, float x, float y, bool visited, bool pIsDepot, int pDemand, int pProcTime):base(id,name, x, y, visited){
 		isDepot = pIsDepot;
 		Demand = pDemand;
 		processingTime = pProcTime;

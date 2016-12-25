@@ -101,7 +101,7 @@ public class VRPGraphLoader : Singleton<VRPGraphLoader> {
 		string[] edgesCosts = data3 [1].Split(new string[] {"\n"}, System.StringSplitOptions.None);
 		string[] vehiclesSettings = data3 [0].Split(new string[] {"\n"}, System.StringSplitOptions.None);
 		List<VRPNode> nodes = new List<VRPNode> ();
-		List<ACOEdge> edges = new List<ACOEdge>();
+		List<ACOVRPEdge> edges = new List<ACOVRPEdge>();
 		List<VRPVehicle> vehicles = new List<VRPVehicle>();
 		VRPGraph graph = null;
 		//depot
@@ -139,15 +139,15 @@ public class VRPGraphLoader : Singleton<VRPGraphLoader> {
 
 				if (!nodeA.Equals(nodeB) || (nodeA.Equals(nodeB) && !avoidCycleSameNode)) {
 					int cost = Int32.Parse (values [2]);
-					ACOEdge symetricEdge = edges.Find (e => e.NodeA.Id.Equals (nodeB) && e.NodeB.Id.Equals (nodeA));
+					ACOVRPEdge symetricEdge = edges.Find (e => e.NodeA.Id.Equals (nodeB) && e.NodeB.Id.Equals (nodeA));
 
 					if (symetricEdge != null) {
 						if (symetricDistance)
-							edges.Add (new ACOEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, initialPheromone));
+							edges.Add (new ACOVRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, initialPheromone));
 						else
-							edges.Add (new ACOEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, initialPheromone));
+							edges.Add (new ACOVRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, initialPheromone));
 					} else {
-						edges.Add (new ACOEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, initialPheromone));
+						edges.Add (new ACOVRPEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, initialPheromone));
 					}
 				}
 			}
@@ -171,7 +171,25 @@ public class VRPGraphLoader : Singleton<VRPGraphLoader> {
 			float y = Mathf.Cos(angle) * radius;
 			Vector3 pos = new Vector3(x, y, 0) + centerPos;
 			VRPNodeGameObject nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
-			nodeGO.loadNode(nodes[i]); //load node info
+			VRPNode node = nodes[i];
+			node.X = x;
+
+			//
+			//calculate y coord given a distance and origin point
+			// d^2=sqrt((x-depotX)^2+(y-depotY)^2)
+			// we need to set x with a value, for exmaple the previous calculated, then calculate y
+			// we need this for algorithm logic, not for positioning the node in the world
+			//
+			ACOVRPEdge edge = vrp.Graph.Edges.Find(e=>e.NodeA.IsDepot && e.NodeB.Id.Equals(node.Id));
+			if(edge != null){
+				int r = UnityEngine.Random.Range (0, 1);
+				float f = UnityEngine.Mathf.Sqrt (UnityEngine.Mathf.Pow (edge.Weight, 2) - UnityEngine.Mathf.Pow (x - edge.NodeA.X, 2));
+				f = r == 0 ? f : f * (-1);
+				y = f + edge.NodeA.Y;
+			}
+
+			node.Y = y;
+			nodeGO.loadNode(node); //load node info
 			nodeGOs.Add(nodeGO);
 		}   
 

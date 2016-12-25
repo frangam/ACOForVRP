@@ -21,6 +21,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOEdge> {
+public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOVRPEdge> {
 	
 }

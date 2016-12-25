@@ -21,7 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge {
+public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -38,6 +38,22 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge {
 	private Transform destination;
 	private bool canMove = false;
 	private bool isCommingBack = false;
+	private bool destinationReached = false;
+
+	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
+	public bool IsCommingBack {
+		get {
+			return this.isCommingBack;
+		}
+	}
+
+	public bool DestinationReached {
+		get {
+			return this.destinationReached;
+		}
+	}
 
 	//--------------------------------------
 	// Unity Methods
@@ -54,14 +70,13 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge {
 		if (canMove) {
 			transform.position = Vector3.MoveTowards (transform.position, destination.position, Time.deltaTime * movSpeed);
 			transform.rotation = Quaternion.LookRotation(Vector3.forward, destination.position - transform.position);
-			bool targetReached = Vector3.Distance (transform.position, destination.position) <= 0.1f;
+			destinationReached = Vector3.Distance (transform.position, destination.position) <= 0.1f;
 
-			if (isCommingBack && targetReached) { //arrived to depot
-				isCommingBack = false;
+			if (DestinationReached)
+				canMove = false;
+			
+			if (isCommingBack && destinationReached) { //arrived to depot
 				Destroy (gameObject);
-			} else if (!isCommingBack && targetReached) { //come back to the depot
-				isCommingBack = true;
-				destination = depot;
 			}
 		}
 	}
@@ -70,6 +85,7 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge {
 	// Public Methods
 	//--------------------------------------
 	public virtual void loadAnt(Ant<T,N,E> a, Transform pDestination, float pSpeed, Transform pDepot){
+		destinationReached = false;
 		ant = a;
 		destination = pDestination;
 		canMove = true;
@@ -78,5 +94,22 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge {
 		depot = pDepot;
 	}
 
+	public virtual void comeBackToDepot(){
+		destinationReached = false;
+		isCommingBack = true;
+		destination = depot;
+		canMove = true;
+	}
+
+	public virtual void goToNextNode(Transform newDestination){
+		destinationReached = false;
+		destination = newDestination;
+		canMove = true;
+	}
+
+	public virtual IEnumerator checkDestinationReached(){
+		while(!DestinationReached)
+			yield return DestinationReached;
+	}
 
 }

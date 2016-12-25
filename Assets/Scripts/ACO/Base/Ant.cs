@@ -23,7 +23,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class Ant<T,N,E> where N:Node where E:ACOEdge {
+public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -55,6 +55,27 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge {
 		}
 		set{
 			this.routes = value;
+		}
+	}
+
+	public List<N> CompleteTour{
+		get{
+			List<N> nodes = new List<N> ();
+
+			foreach (E e in routes) {
+				N from = (N) e.NodeA;
+				N to = (N) e.NodeB;
+
+				if(checkConditionToAddNodeToCompleteTour(nodes, from)){
+					nodes.Add (from);
+				}
+
+				if(checkConditionToAddNodeToCompleteTour(nodes, to)){
+					nodes.Add (to);
+				}
+			}
+
+			return nodes;
 		}
 	}
 
@@ -99,6 +120,10 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge {
 		routeDistanceCost += edge.Weight;
 		routes.Add(edge);
 		ACOSolver.Instance.pheromoneLocalUpdate (edge.Pheromone);
+	}
+
+	protected virtual bool checkConditionToAddNodeToCompleteTour(List<N> allNodes, N nodeToAdd){
+		return !allNodes.Contains (nodeToAdd);
 	}
 
 	//--------------------------------------
