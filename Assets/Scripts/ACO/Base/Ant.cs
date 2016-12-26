@@ -115,11 +115,11 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	// Virtual Methods
 	//--------------------------------------
-	public virtual void createRoute(Graph<N, E> graph, N from, N to){
+	public virtual E createRoute(Graph<N, E> graph, N from, N to){
 		E edge = graph.Edges.Find (e => e.NodeA.Id.Equals(from.Id) && e.NodeB.Id.Equals(to.Id));
 		routeDistanceCost += edge.Weight;
 		routes.Add(edge);
-		ACOSolver.Instance.pheromoneLocalUpdate (edge.Pheromone);
+		return edge;
 	}
 
 	protected virtual bool checkConditionToAddNodeToCompleteTour(List<N> allNodes, N nodeToAdd){

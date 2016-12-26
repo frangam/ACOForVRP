@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-public class VRPGraphLoader : Singleton<VRPGraphLoader> {
+public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------

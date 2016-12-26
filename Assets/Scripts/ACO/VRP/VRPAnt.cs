@@ -33,10 +33,10 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 	//--------------------------------------
 	// Overriden Methods
 	//--------------------------------------
-	public override void createRoute (Graph<VRPNode, ACOVRPEdge> graph, VRPNode from, VRPNode to)
+	public override ACOVRPEdge createRoute (Graph<VRPNode, ACOVRPEdge> graph, VRPNode from, VRPNode to)
 	{
 		RouteProcessingTimeCost += to.ProcessingTime;
-		base.createRoute (graph, from, to);
+		return base.createRoute (graph, from, to);
 	}
 
 	protected override bool checkConditionToAddNodeToCompleteTour (List<VRPNode> allNodes, VRPNode nodeToAdd)

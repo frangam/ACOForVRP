@@ -39,6 +39,6 @@ public class VRPGraph: WeightedGraph<VRPNode, ACOVRPEdge> {
 
 	public void resetPheromone(){
 		foreach (ACOVRPEdge e in Edges)
-			e.Pheromone = VRPGraphLoader.Instance.InitialPheromone;
+			e.Pheromone = ACOVRPGraphLoader.Instance.InitialPheromone;
 	}
 }

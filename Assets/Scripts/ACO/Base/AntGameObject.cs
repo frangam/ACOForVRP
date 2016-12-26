@@ -31,6 +31,9 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 	[SerializeField]
 	private float movSpeed = 0.5f;
 
+	[SerializeField]
+	private bool destroyWhenDepotReached = false;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -39,10 +42,21 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 	private bool canMove = false;
 	private bool isCommingBack = false;
 	private bool destinationReached = false;
+	private float currentPheromoneInfluence = 0.1f;
+	private bool canSpawnPheromone = true;
+	private Color pheromoneColor;
 
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
+	public Ant<T, N, E> Ant {
+		get {
+			return this.ant;
+		}
+		set {
+			ant = value;
+		}
+	}
 	public bool IsCommingBack {
 		get {
 			return this.isCommingBack;
@@ -55,10 +69,28 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 		}
 	}
 
+	public bool DestroyWhenDepotReached {
+		get {
+			return this.destroyWhenDepotReached;
+		}
+	}
+
 	//--------------------------------------
 	// Unity Methods
 	//--------------------------------------
 	protected virtual void Awake(){
+		pheromoneColor = new Color(Random.Range(0, 255)/255f, Random.Range(0, 255)/255f, Random.Range(0, 255)/255f);
+	}
+
+	protected virtual void OnEnable(){
+		
+	}
+
+	protected virtual void OnDisable(){
+
+	}
+
+	protected virtual void OnDistroy(){
 
 	}
 
@@ -76,8 +108,16 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 				canMove = false;
 			
 			if (isCommingBack && destinationReached) { //arrived to depot
-				Destroy (gameObject);
+				this.CancelInvoke();
+				resetAnt ();
+
+				if (destroyWhenDepotReached)
+					Destroy (gameObject);
+				else
+					gameObject.SetActive (false);
 			}
+			else if (canSpawnPheromone)
+				StartCoroutine (spawnPheromone ());
 		}
 	}
 
@@ -92,6 +132,19 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 		isCommingBack = false;
 		movSpeed = pSpeed;
 		depot = pDepot;
+	}
+
+	public virtual void resetAnt(){
+		isCommingBack = false;
+		destinationReached = false;
+		canMove = false;
+		canSpawnPheromone = true;
+	}
+
+	public virtual E createRoute(Graph<N, E> graph, N from, N to){
+		E edge = ant.createRoute (graph, from, to);
+//		currentPheromoneInfluence = edge.Pheromone;
+		return edge;
 	}
 
 	public virtual void comeBackToDepot(){
@@ -110,6 +163,15 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 	public virtual IEnumerator checkDestinationReached(){
 		while(!DestinationReached)
 			yield return DestinationReached;
+	}
+
+	public virtual IEnumerator spawnPheromone(){
+		canSpawnPheromone = false;
+		yield return new WaitForSeconds (currentPheromoneInfluence*(1/movSpeed));
+		GameObject p = Instantiate (ACOSolver.Instance.PbPheromone, transform.position, Quaternion.identity);
+		p.GetComponent<SpriteRenderer> ().color = pheromoneColor;
+		ACOSolver.Instance.CurrentPheromoneTrails.Add (p);
+		canSpawnPheromone = true;
 	}
 
 }

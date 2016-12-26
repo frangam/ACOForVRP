@@ -22,5 +22,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOVRPEdge> {
-	
+
+	public override ACOVRPEdge createRoute (Graph<VRPNode, ACOVRPEdge> graph, VRPNode from, VRPNode to)
+	{
+		ACOVRPEdge edge = base.createRoute (graph, from, to);
+		edge.Pheromone = ACOSolver.Instance.pheromoneLocalUpdate (edge);
+
+
+		return edge;
+	}
 }
