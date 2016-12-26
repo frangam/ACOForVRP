@@ -159,32 +159,63 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			float progress = (i * 1.0f) / totalNodes; //progress 0-1
 			float angle = progress * Mathf.PI * 2; //in radians
 			float radius = randomRadius ? UnityEngine.Random.Range(minSpawnRadius, maxSpawnRadius) : maxSpawnRadius;
-			float x = Mathf.Sin(angle) * radius;
-			float y = Mathf.Cos(angle) * radius;
+			float x = 0;//Mathf.Sin(angle) * radius;
+			float y = 0;//Mathf.Cos(angle) * radius;
 			Vector3 pos = new Vector3(x, y, 0) + centerPos;
-			VRPNodeGameObject nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
+			VRPNodeGameObject nodeGO = null; 
 			VRPNode node = nodes[i];
-			node.X = x;
 
 			//
 			//calculate y coord given a distance and origin point
-			// d^2=sqrt((x-depotX)^2+(y-depotY)^2)
+			// d^2=sqrt((x-depotX)^2+(y-depotY)^2)^2
+			// (d^2)-(x-depotX)^2 = (y-depotY)^2
+			// (+-)sqrt((d^2)-(x-depotX)^2) = y - depotY
+			// y = (+-)(sqrt((d^2)-(x-depotX)^2)) + depotY
+			//
+			// d = edge.Weight, depotX = edge.NodeB.X, depotY = edge.NodeB.Y
+			//
 			// we need to set x with a value, for exmaple the previous calculated, then calculate y
 			// we need this for algorithm logic, not for positioning the node in the world
 			//
-			ACOVRPEdge edge = vrp.Graph.Edges.Find(e=>e.NodeA.IsDepot && e.NodeB.Id.Equals(node.Id));
-			if(edge != null){
-				int r = UnityEngine.Random.Range (0, 1);
-				float f = UnityEngine.Mathf.Sqrt (UnityEngine.Mathf.Pow (edge.Weight, 2) - UnityEngine.Mathf.Pow (x - edge.NodeA.X, 2));
-				f = r == 0 ? f : f * (-1);
-				y = f + edge.NodeA.Y;
+			ACOVRPEdge edge = vrp.Graph.Edges.Find(e=>e.NodeB.IsDepot && e.NodeA.Id.Equals(node.Id));
+			if (edge != null) {
+				int maxDistance = maxDistanceOfEdgeFromDepot ();
+				x = Mathf.Sin (angle) * ((edge.Weight * 1.0f) /maxDistance) * maxSpawnRadius;
+				y = Mathf.Cos (angle) * ((edge.Weight * 1.0f) /maxDistance) * maxSpawnRadius;
+//				int r = UnityEngine.Random.Range (0, 100);
+//				float f = UnityEngine.Mathf.Sqrt ((UnityEngine.Mathf.Pow (edge.Weight, 2)) - (UnityEngine.Mathf.Pow (x - edge.NodeB.X, 2))); // f=(+-)(sqrt((d^2)-(x-depotX)^2))
+////				f = r >= 50 ? f : f * (-1);
+//				f = x >= 0 ? f : f * (-1);
+//				y = f + edge.NodeB.Y; //(edge.NodeB.Y = depotY)
+
+//				pos = pos.normalized * 3;
+
+
+				pos = new Vector3(x, y, 0);
+//				pos = pos.normalized;
+//				pos = new Vector3(x, pos.y, 0);
+				x = pos.x;
+				y = pos.y;
+				nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
+			} else {
+				nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
 			}
 
+
+			node.X = x;
 			node.Y = y;
 			nodeGO.loadNode(node); //load node info
 			nodeGOs.Add(nodeGO);
 		}   
 
 		return nodeGOs;
+	}
+
+	private int maxDistanceOfEdgeFromDepot(int order=0){
+		List<ACOVRPEdge> edgesWithToDepot = vrp.Graph.Edges.Where (e => e.NodeB.IsDepot).ToList<ACOVRPEdge>();
+		edgesWithToDepot.Sort ();
+		edgesWithToDepot.Reverse ();
+
+		return edgesWithToDepot [order].Weight;
 	}
 }

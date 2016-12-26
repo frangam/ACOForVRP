@@ -141,7 +141,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private IEnumerator ACO(){
 		antGOs = new List<VRPAntGameObject>();
 
-		yield return new WaitForSeconds (startDelay);
+		yield return new WaitForSeconds (startDelay*2);
 
 		for (int i = 0; i < iterations; i++) {
 			currentIteration = i;
@@ -157,7 +157,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 				foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
 					List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
 					int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
-					double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*1.8;
+					double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*8;
 					int rest = (int)(res);
 
 					if (rest <= 0) {
@@ -165,16 +165,19 @@ public class ACOSolver : Singleton<ACOSolver>{
 							li.Add (p);
 					} else {
 						for (int j = 0; j < Mathf.Clamp(pheromoneTrails [pEd].Count - rest, 1, pheromoneTrails [pEd].Count); j++)
-							li.Add (pheromoneTrails [pEd] [i]);
+							li.Add (pheromoneTrails [pEd] [j]);
 					}
-
+						
 					phForDeleting.Add (pEd, li);
 				}
 
-				foreach (ACOVRPEdge e in phForDeleting.Keys) {
-					foreach (VRPPheromoneGO go in phForDeleting[e]) {
-						pheromoneTrails [e].Remove (go);
-						Destroy (go.gameObject);
+				//delete pheromone gameobjects
+				if (phForDeleting.Count > 0 && phForDeleting.Count > 0) {
+					foreach (ACOVRPEdge e in phForDeleting.Keys) {
+						foreach (VRPPheromoneGO go in phForDeleting[e]) {
+							pheromoneTrails [e].Remove (go);
+							Destroy (go.gameObject);
+						}
 					}
 				}
 			}

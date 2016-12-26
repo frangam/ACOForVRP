@@ -142,19 +142,23 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 	// Public Methods
 	//--------------------------------------
 	public virtual void loadAnt(Ant<T,N,E> a, Transform pDestination, float pSpeed, Transform pDepot, bool pIsInitializationAnt=false){
+		currentPheromoneInfluence = ACOSolver.Instance.InitialPheromone;
+		isInitializationAnt = pIsInitializationAnt;
 		destinationReached = false;
 		ant = a;
 		destination = pDestination;
 		canMove = !isInitializationAnt;
 		isCommingBack = false;
-		movSpeed = !isInitializationAnt ? pSpeed : pSpeed * 1000;
+		movSpeed = !isInitializationAnt ? pSpeed : (pSpeed * 5);
 		depot = pDepot;
-		isInitializationAnt = pIsInitializationAnt;
 
-		if(isInitializationAnt)
+		if (isInitializationAnt) {
 			pheromoneColor = Color.white;
+
+			GetComponent<SpriteRenderer> ().enabled = false;
+		}
 		else
-			pheromoneColor = new Color(Random.Range(0, 255)/255f, Random.Range(0, 255)/255f, Random.Range(0, 255)/255f);
+			pheromoneColor = createPheromoneColor ();
 	}
 
 	public virtual void resetAnt(){
@@ -191,7 +195,7 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 
 	public virtual IEnumerator spawnPheromone(){
 		canSpawnPheromone = false;
-		yield return new WaitForSeconds ((float) currentPheromoneInfluence*(movSpeed*Time.deltaTime));
+		yield return new WaitForSeconds ((float) currentPheromoneInfluence*((1/movSpeed)*(isInitializationAnt ? 0.000000000001f:1f)));
 		P p = Instantiate (ACOSolver.Instance.PbPheromone, transform.position, Quaternion.identity) as P;
 		p.Edge = currentEdgeThrough;
 		p.GetComponent<SpriteRenderer> ().color = pheromoneColor;
@@ -199,4 +203,31 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 		canSpawnPheromone = true;
 	}
 
+	//--------------------------------------
+	// Private Methods
+	//--------------------------------------
+	private Color createPheromoneColor(){
+		//create a random color
+		Color res = new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+		float hue = 0f, contrast = 0f, brigVal = 0f;
+
+		//get hue,constrast,and brigneths values
+		Color.RGBToHSV(res, out hue, out contrast, out brigVal);
+
+		//prevent light and brigthness color
+		if (brigVal >= 0.7f){
+			brigVal = 0.7f;
+		}
+		else if (brigVal<=0.3f){
+			brigVal = 0.3f;
+		}
+		if (contrast <= 0.8f){
+			contrast = 0.8f;
+		}
+			
+		//reassign new color values
+		res =Color.HSVToRGB(hue,contrast,brigVal);
+
+		return res;
+	}
 }

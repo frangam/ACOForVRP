@@ -22,7 +22,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 [System.Serializable]
-public class WEdge<N> : Edge<N> where N:Node {
+public class WEdge<N> : Edge<N>, System.IComparable  where N:Node{
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -55,5 +55,15 @@ public class WEdge<N> : Edge<N> where N:Node {
 	{
 		return string.Format ("[WEdge: nodeA={0}, nodeB={1}, weight={2}]", NodeA, NodeB, weight);
 	}
-	
+
+	int System.IComparable.CompareTo(object b)
+	{
+		WEdge<N> e2=(WEdge<N>)b;
+		if (this.weight > e2.weight)
+			return 1;
+		if (this.weight < e2.weight)
+			return -1;
+		else
+			return 0;
+	}
 }
