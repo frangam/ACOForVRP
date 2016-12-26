@@ -50,10 +50,13 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private int iterations = 10;
 
 	[SerializeField]
-	private float pheromoneInfluence = 0.2f;
+	private float pheromoneInfluence = 1f;
 
 	[SerializeField]
-	private float visibilityInfluence = 10;
+	private float visibilityInfluence = 5;
+
+	[SerializeField]
+	private float ro = 0.99f;
 
 	[SerializeField]
 	[Range(0,1)]
@@ -534,8 +537,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 	public void pheromoneGlobalUpdate(VRPAnt ant){		
 		foreach (ACOVRPEdge e in ant.Routes) {
 			float oldPheromone = e.Pheromone;
-			float newPhe = !improvedACO ? ((1.0f - PheromoneInfluence) * oldPheromone) + PheromoneInfluence / ant.RouteDistanceCost
-				: ((1.0f - PheromoneInfluence) * oldPheromone) * (currentIteration - 1) + pheromoneIncrement (ant);
+			float newPhe = !improvedACO ? ((1.0f - ro) * oldPheromone) + ro / ant.RouteDistanceCost
+				: ((1.0f - ro) * oldPheromone) * (currentIteration - 1) + pheromoneIncrement (ant);
 			e.Pheromone = newPhe;
 			vrp.Graph.Edges.Find (ed => ed.Id.Equals (e.Id)).Pheromone = newPhe;
 		}
