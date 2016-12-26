@@ -21,54 +21,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class ACOEdge<N> : WEdge<N> where N:Node {
+public class PheromoneGameObject<N,E> : MonoBehaviour where N:Node where E:ACOEdge<N>  {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
-	private double pheromone;
-
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-	private double previousPheromone;
+	private E edge;
 
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
-	public double Pheromone {
+	public E Edge {
 		get {
-			return this.pheromone;
+			return this.edge;
 		}
 		set {
-			previousPheromone = pheromone;
-			pheromone = value;
-		}
-	}
-
-	public double PreviousPheromone {
-		get {
-			return this.previousPheromone;
-		}
-		set {
-			previousPheromone = value;
+			edge = value;
 		}
 	}
 
 	//--------------------------------------
-	// Constructors
+	// Virtual Methods
 	//--------------------------------------
-	public ACOEdge(N a, N b, int pWeight, double pPheromone):base(a, b, pWeight){
-		previousPheromone = ACOSolver.Instance.InitialPheromone;
-		pheromone = pPheromone;
-	}
 
-	//--------------------------------------
-	// Overriden Methods
-	//--------------------------------------
-	public override string ToString ()
-	{
-		return string.Format ("[ACOEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}, prevPheromone={4}]", NodeA, NodeB, Weight, pheromone, previousPheromone);
-	}
 }

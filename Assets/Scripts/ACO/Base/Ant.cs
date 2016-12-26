@@ -33,7 +33,7 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
-	private List<E> routes;
+	private List<E> paths;
 	private int routeDistanceCost;
 	private int routeProcessingTimeCost;
 
@@ -49,12 +49,22 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 		}
 	}
 
-	public List<E> Routes {
+	/// <summary>
+	/// Sorted based on the way the nodes of them are visited
+	/// </summary>
+	/// <value>The paths.</value>
+	public List<E> Paths {
 		get {
-			return this.routes;
+			return this.paths;
 		}
 		set{
-			this.routes = value;
+			this.paths = value;
+		}
+	}
+
+	public int TotalRouteWeight{
+		get{
+			return Mathf.Clamp(paths.Sum (r => r.Weight), 1, int.MaxValue);
 		}
 	}
 
@@ -62,7 +72,7 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 		get{
 			List<N> nodes = new List<N> ();
 
-			foreach (E e in routes) {
+			foreach (E e in paths) {
 				N from = (N) e.NodeA;
 				N to = (N) e.NodeB;
 
@@ -78,6 +88,8 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 			return nodes;
 		}
 	}
+
+
 
 	public int RouteDistanceCost {
 		get {
@@ -104,7 +116,7 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 		theObject = pTheObject;
 		routeDistanceCost = 0;
 		routeProcessingTimeCost = 0;
-		routes = new List<E>();
+		paths = new List<E>();
 	}
 
 	//--------------------------------------
@@ -118,13 +130,14 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	public virtual E createRoute(Graph<N, E> graph, N from, N to){
 		E edge = graph.Edges.Find (e => e.NodeA.Id.Equals(from.Id) && e.NodeB.Id.Equals(to.Id));
 		routeDistanceCost += edge.Weight;
-		routes.Add(edge);
+		paths.Add(edge);
 		return edge;
 	}
 
 	protected virtual bool checkConditionToAddNodeToCompleteTour(List<N> allNodes, N nodeToAdd){
 		return !allNodes.Contains (nodeToAdd);
 	}
+
 
 	//--------------------------------------
 	// Private Methods

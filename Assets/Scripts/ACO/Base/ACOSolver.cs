@@ -32,7 +32,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 	[SerializeField]
 	[Tooltip("Pheromone Prefab")]
-	private GameObject pbPheromone;
+	private VRPPheromoneGO pbPheromone;
 
 	[SerializeField]
 	private float antSpeed = 2;
@@ -50,13 +50,17 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private int iterations = 10;
 
 	[SerializeField]
+	private double initialPheromone = 0.001;
+
+	[SerializeField]
 	private float pheromoneInfluence = 1f;
 
 	[SerializeField]
 	private float visibilityInfluence = 5;
 
 	[SerializeField]
-	private float ro = 0.99f;
+	[Range(0,1)]
+	private float ro = 0.1f;
 
 	[SerializeField]
 	[Range(0,1)]
@@ -68,9 +72,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
-	private VRP vrp;
+	private ACOVRP vrp;
 	private List<VRPAnt> ants;
-	private Dictionary<int,List<GameObject>> pheromoneTrails = new Dictionary<int,List<GameObject>>();
+	private Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> pheromoneTrails = new Dictionary<ACOVRPEdge,List<VRPPheromoneGO>>();
 	private int currentIteration = 0;
 
 	/// <summary>
@@ -81,7 +85,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
-	public GameObject PbPheromone {
+	public double InitialPheromone {
+		get {
+			return this.initialPheromone;
+		}
+	}
+	public VRPPheromoneGO PbPheromone {
 		get {
 			return this.pbPheromone;
 		}
@@ -98,16 +107,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			return this.visibilityInfluence;
 		}
 	}
-
-	public List<GameObject> CurrentPheromoneTrails {
-		get {
-			return this.pheromoneTrails[currentIteration];
-		}
-		set {
-			pheromoneTrails[currentIteration] = value;
-		}
-	}
-
+		
 	//--------------------------------------
 	// Unity Methods
 	//--------------------------------------
@@ -122,14 +122,17 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 	protected virtual void OnEnable (){
 		ACOVRPGraphLoader.OnVRPLoaded += OnVRPLoaded;
+		VRPAntGameObject.OnPheromoneSpawned += OnPheromoneSpawned;
 	}
 
 	protected virtual void OnDisable (){
 		ACOVRPGraphLoader.OnVRPLoaded -= OnVRPLoaded;
+		VRPAntGameObject.OnPheromoneSpawned -= OnPheromoneSpawned;
 	}
 
 	protected virtual void OnDestroy (){
 		ACOVRPGraphLoader.OnVRPLoaded -= OnVRPLoaded;
+		VRPAntGameObject.OnPheromoneSpawned -= OnPheromoneSpawned;
 	}
 
 	//--------------------------------------
@@ -145,15 +148,35 @@ public class ACOSolver : Singleton<ACOSolver>{
 			VRPAnt bestAnt = ants[0];
 			VRPNode depot = vrp.Graph.Nodes.Find(n => n.IsDepot); //first, the depot
 			vrp.Graph.resetNodesVisited ();
-			pheromoneTrails.Add (currentIteration, new List<GameObject> ());
 
-			//delete pheromone trails of previous iteration
+			//spawn initial ant to init pheromone value 
+
+			//delete pheromone trails GameObjects of previous iteration
 			if (i > 0) {
-				//TODO improve
-//				foreach (GameObject p in pheromoneTrails[i-1]) {
-//					Destroy (p);
-//				}
-//				pheromoneTrails.Remove (i - 1);
+				Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> phForDeleting = new Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> ();
+				foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
+					List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
+					int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
+					double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*1.8;
+					int rest = (int)(res);
+
+					if (rest <= 0) {
+						foreach (VRPPheromoneGO p in pheromoneTrails[pEd])
+							li.Add (p);
+					} else {
+						for (int j = 0; j < Mathf.Clamp(pheromoneTrails [pEd].Count - rest, 1, pheromoneTrails [pEd].Count); j++)
+							li.Add (pheromoneTrails [pEd] [i]);
+					}
+
+					phForDeleting.Add (pEd, li);
+				}
+
+				foreach (ACOVRPEdge e in phForDeleting.Keys) {
+					foreach (VRPPheromoneGO go in phForDeleting[e]) {
+						pheromoneTrails [e].Remove (go);
+						Destroy (go.gameObject);
+					}
+				}
 			}
 
 			//--------------------------------------
@@ -164,7 +187,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 				//for each ant
 				foreach(VRPAnt ant in ants) {
-					ant.Routes = new List<ACOVRPEdge> ();
+					ant.Paths = new List<ACOVRPEdge> ();
 					VRPNode currentNode = depot;
 					currentNode.Visited = true;
 					int quantity = ant.TheObject.Quantity;
@@ -193,34 +216,34 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 							//comming back to the depot
 //							ant.createRoute (vrp.Graph, currentNode, depot);
-							aGO.createRoute (vrp.Graph, currentNode, depot);
+							ACOVRPEdge edgeThrough = aGO.createRoute (vrp.Graph, currentNode, depot);
 							currentNode.Visited = true;
 
 							//tell to ant go to the depot
-							aGO.comeBackToDepot();
+							aGO.comeBackToDepot(edgeThrough);
 							while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
 								yield return null;
 						}
 						else {
 //							ant.createRoute (vrp.Graph, currentNode, nextBestNode);
-							aGO.createRoute (vrp.Graph, currentNode, nextBestNode);
+							ACOVRPEdge edgeThrough = aGO.createRoute (vrp.Graph, currentNode, nextBestNode);
 							quantity -= nextBestNode.Demand;
 							currentNode = nextBestNode;
 							currentNode.Visited = true;
 
 							//tell to ant go to the next node
-							aGO.goToNextNode (vrp.NodeGOs.Find (n => n.Node.Id.Equals (nextBestNode.Id)).transform);
+							aGO.goToNextNode (edgeThrough, vrp.NodeGOs.Find (n => n.Node.Id.Equals (nextBestNode.Id)).transform);
 							while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
 								yield return null;
 
 							if (quantity == 0 || allNodesVisited(vrp.Graph.Nodes)) {
 								//comming back to the depot
 //								ant.createRoute (vrp.Graph, currentNode, depot);
-								aGO.createRoute (vrp.Graph, currentNode, depot);
+								edgeThrough = aGO.createRoute (vrp.Graph, currentNode, depot);
 								currentNode.Visited = true;
 
 								//tell to ant go to the depot
-								aGO.comeBackToDepot();
+								aGO.comeBackToDepot(edgeThrough);
 								while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
 									yield return null;
 							}
@@ -241,7 +264,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			//previous results
 			foreach (VRPAnt a in ants) {
 				string tour = "Prev: A"+a.TheObject.Id+">>";
-				foreach (ACOVRPEdge e in a.Routes) {
+				foreach (ACOVRPEdge e in a.Paths) {
 					tour += e.Id + ".";
 				}
 				Debug.Log (tour);
@@ -250,20 +273,66 @@ public class ACOSolver : Singleton<ACOSolver>{
 			//2-optimal heuristic
 			ants = improveSolutionWithTwoOPT(ants, depot);
 
-			//pheromone global update
-			foreach(VRPAnt a in ants){
-				pheromoneGlobalUpdate (a);
+			//update graph nodes with the best solution
+			List<VRPNode> bestSol = new List<VRPNode>(){depot};
+			foreach (VRPAnt a in ants) {
+				foreach (VRPNode n in a.CompleteTourWithOutDepot) {
+					bestSol.Add (n);
+					vrp.Graph.Nodes.Remove (n);
+				}
 			}
+			//sort nodes based on best solution
+			List<VRPNode> currentNodesInGraph = vrp.Graph.Nodes;
+			vrp.Graph.Nodes.RemoveAll (n => true);
+			vrp.Graph.Nodes.AddRange (bestSol);
+			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
+
+			//optimal results
+			foreach (VRPAnt a in ants) {
+				string tour = "Impv: A"+a.TheObject.Id+">>";
+				foreach (ACOVRPEdge e in a.Paths) {
+					tour += e.Id + ".";
+				}
+				Debug.Log (tour);
+			}
+
+
+			//pheromone global update
+			pheromoneGlobalUpdate ();
 		}
 
 		//results
 		foreach (VRPAnt a in ants) {
 			string tour = "A"+a.TheObject.Id+">>";
-			foreach (ACOVRPEdge e in a.Routes) {
+			foreach (ACOVRPEdge e in a.Paths) {
 				tour += e.Id + ".";
 			}
 			Debug.Log (tour);
 		}
+	}
+
+	private IEnumerator initEdges(){
+		yield return new WaitForSeconds (startDelay);
+
+//		VRPNode init = vrp.Graph.Edges [0].NodeA;
+//		VRPAntGameObject aGO = spawnAnts (ants[0], init, true);
+
+		foreach (ACOVRPEdge e in vrp.Graph.Edges) {
+			if (!e.NodeA.Id.Equals (e.NodeB.Id)) {
+				Debug.Log (e.NodeA.Id+"-"+e.NodeB.Id);
+				VRPNodeGameObject find = vrp.NodeGOs.Find (n => n.Node.Id.Equals (e.NodeB.Id));
+
+				if(find != null){
+					VRPAntGameObject aGO = spawnAnts (ants[0], e.NodeA, true);
+					aGO.goToNextNode (e, find.transform);
+					while (!aGO.DestinationReached)
+						yield return null;
+					Destroy (aGO.gameObject);
+				}
+			}
+		}
+
+		StartCoroutine (ACO());
 	}
 
 	private List<VRPAnt> improveSolutionWithTwoOPT(List<VRPAnt> currentSolution, VRPNode depot){
@@ -345,7 +414,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //routes for ant asociated to the cluster
 
 			VRPNode nFrom = depot, nTo = shortestPath [0];
-			KeyValuePair<int, float> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
+			KeyValuePair<int, double> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
 			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
 
 			for(int i=0; i<shortestPath.Count-1; i++){
@@ -361,19 +430,19 @@ public class ACOSolver : Singleton<ACOSolver>{
 			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
 
 			//update routes of the ant of this cluster
-			currentSolution.Find(c=>c.TheObject.Id.Equals(a.TheObject.Id)).Routes = new List<ACOVRPEdge>(improvedRoutes);
+			currentSolution.Find(c=>c.TheObject.Id.Equals(a.TheObject.Id)).Paths = new List<ACOVRPEdge>(improvedRoutes);
 		}
 
 		return currentSolution;
 	}
 
-	private KeyValuePair<int, float> getWeightAndPheromoneOfEdge(VRPNode a, VRPNode b){
-		KeyValuePair<int, float> res = new KeyValuePair<int, float>();
+	private KeyValuePair<int, double> getWeightAndPheromoneOfEdge(VRPNode a, VRPNode b){
+		KeyValuePair<int, double> res = new KeyValuePair<int, double>();
 
 		ACOVRPEdge edge = vrp.Graph.Edges.Find (e => e.NodeA.Id.Equals (a.Id) && e.NodeB.Id.Equals (b.Id));
 
 		if (edge != null)
-			res = new KeyValuePair<int, float> (edge.Weight, edge.Pheromone);
+			res = new KeyValuePair<int, double> (edge.Weight, edge.Pheromone);
 
 		return res;
 	}
@@ -469,101 +538,124 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 	private VRPNode selectNextNodeForVisiting(VRPNode current, int antQuantity){
 		VRPNode bestNode = null;
-		float bestScore = float.MinValue;
 		bool firstCriteriaOfSelection = false;
+		double bestScore = float.MinValue;
+		double total = 1.0;
 
 		if (!improvedACO) {
 			float q = Random.Range (0f, 1f);
 			firstCriteriaOfSelection = q <= q0;
+
+			if (!firstCriteriaOfSelection) {
+				total = totalTauNij (current);
+			}
+		} else {
+			total = totalTauNij (current);
 		}
 
-		foreach (VRPNode n in vrp.Graph.Nodes) {
-			if (!n.Id.Equals(current.Id) && !n.Visited && n.Demand <= antQuantity) {
-				ACOVRPEdge e = vrp.Graph.Edges.Find(x => x.NodeA.Id.Equals(current.Id) && x.NodeB.Id.Equals(n.Id));
-				float prob = 0;
+		foreach (VRPNode nextNode in vrp.Graph.Nodes) {
+			if (!nextNode.Id.Equals(current.Id) && !nextNode.Visited && nextNode.Demand <= antQuantity) {
+				double prob = 0.0;
+				ACOVRPEdge edgeFromCurNodeToNextNode = vrp.Graph.Edges.Find(x => x.NodeA.Id.Equals(current.Id) && x.NodeB.Id.Equals(nextNode.Id));
 
 				if (!improvedACO && firstCriteriaOfSelection) {
-					prob = calculateFirstOperandProbToVisitNextNode (e.Pheromone, e.Weight);
+					prob = calculateFirstOperandProbToVisitNextNode (edgeFromCurNodeToNextNode.Pheromone, edgeFromCurNodeToNextNode.Weight);
 				} else {
-					prob = calculateProbabilityToVisitNextNode (current, e.Pheromone, e.Weight);
+					prob = calculateFirstOperandProbToVisitNextNode (edgeFromCurNodeToNextNode.Pheromone, edgeFromCurNodeToNextNode.Weight) / total;
 				}
 
 				if (prob > bestScore) {
 					bestScore = prob;
-					bestNode = n;
+					bestNode = nextNode;
 				}
 			}
 		}
 
 		return bestNode;
 	}
-
-	
-
-	private float calculateProbabilityToVisitNextNode(VRPNode current, float edgePheromone, int edgeCost){
-		float prob = 0;
-		float total = 0;
-
+		
+	private double totalTauNij(VRPNode current){
+		double total = 0.0;
 		foreach (VRPNode h in vrp.Graph.Nodes) {
 			if (!h.Visited && !h.Id.Equals (current.Id)){
-				ACOVRPEdge e = vrp.Graph.Edges.Find(x => x.NodeA.Id.Equals(current.Id) && x.NodeB.Id.Equals(h.Id));
-				total += calculateFirstOperandProbToVisitNextNode (e.Pheromone, e.Weight);
+				ACOVRPEdge edge = vrp.Graph.Edges.Find(x => x.NodeA.Id.Equals(current.Id) && x.NodeB.Id.Equals(h.Id));
+				total += calculateFirstOperandProbToVisitNextNode (edge.Pheromone, edge.Weight);
 			}
 		}
-
-		prob = calculateFirstOperandProbToVisitNextNode (edgePheromone, edgeCost) / total;
-
-		return prob;
+		return total;
 	}
 
-	private float calculateFirstOperandProbToVisitNextNode(float edgePheromone, int edgeCost){
-		float visibility = edgeCost != 0 ? 1.0f / (edgeCost*1.0f) : 1.0f;
+	private double calculateFirstOperandProbToVisitNextNode(double edgePheromone, int edgeCost){
+		double visibility = edgeCost != 0 ? 1.0 / (edgeCost*1.0) : 1.0;
 
-		return improvedACO ? Mathf.Pow (edgePheromone, pheromoneInfluence) * Mathf.Pow (visibility, visibilityInfluence) 
-				: edgePheromone * Mathf.Pow (visibility, visibilityInfluence);
+		return improvedACO ? System.Math.Pow (edgePheromone, pheromoneInfluence) * System.Math.Pow (visibility, visibilityInfluence) 
+				: edgePheromone * System.Math.Pow (visibility, visibilityInfluence);
 	}
 		
 
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
-	public float pheromoneLocalUpdate(ACOVRPEdge edge){
-		float newPhe = !improvedACO ? ((1.0f - PheromoneInfluence) * edge.Pheromone) + PheromoneInfluence : edge.Pheromone;
+	public double pheromoneLocalUpdate(ACOVRPEdge edge){
+		double newPhe = !improvedACO ? ((1.0 - PheromoneInfluence) * edge.Pheromone) + PheromoneInfluence : edge.Pheromone;
 		vrp.Graph.Edges.Find (ed => ed.Id.Equals (edge.Id)).Pheromone = newPhe;
 
 		return newPhe;
 	}
 
-	public void pheromoneGlobalUpdate(VRPAnt ant){		
-		foreach (ACOVRPEdge e in ant.Routes) {
-			float oldPheromone = e.Pheromone;
-			float newPhe = !improvedACO ? ((1.0f - ro) * oldPheromone) + ro / ant.RouteDistanceCost
-				: ((1.0f - ro) * oldPheromone) * (currentIteration - 1) + pheromoneIncrement (ant);
-			e.Pheromone = newPhe;
-			vrp.Graph.Edges.Find (ed => ed.Id.Equals (e.Id)).Pheromone = newPhe;
+	public void pheromoneGlobalUpdate(){		
+		//update pheromone in all of edges of the Graph
+		foreach (ACOVRPEdge edgeIJ in vrp.Graph.Edges) {
+			double newPhe = 0.0;
+			foreach (VRPAnt ant in ants) {
+				newPhe = globalUpdateResult (edgeIJ, ant);
+			}
+			edgeIJ.Pheromone = newPhe;
 		}
 	}
 
-	public float pheromoneIncrement(VRPAnt ant){
-		float res = 0;
-//		int Q = ant.TheObject.Quantity;
-		int L = ant.Routes.Sum (r => r.Weight);
-		res = 1 / L;
+	public double globalUpdateResult(ACOVRPEdge edge, VRPAnt ant){
+		double oldPheromone = edge.Pheromone;
+		double newPhe = !improvedACO ? ((1.0 - ro) * oldPheromone) + ro / ant.RouteDistanceCost
+//			: ((1.0f - ro) * oldPheromone) * (currentIteration - 1) + pheromoneIncrement (ant);
+			: (ro * oldPheromone) + pheromoneImprovedIncrement(edge, ant);
+		return newPhe;
+	}
 
+	public double pheromoneImprovedIncrement(ACOVRPEdge edgeIJ, VRPAnt ant){
+		double inc = 0.0;
+		int Q = ants[0].TheObject.Quantity;
+		int L = ants.Sum(a=>a.TotalRouteWeight);
+		int K = Mathf.Clamp(ants.Count, 1, int.MaxValue);
+		int dij = edgeIJ.Weight;
+		bool routeIJInAntRoutes = ant.Paths.Find (edgeK => edgeK.NodeA.Id.Equals (edgeIJ.NodeA.Id) && edgeK.NodeB.Id.Equals (edgeIJ.NodeB.Id)) != null;
 
-		return res;
+		if (routeIJInAntRoutes) {
+			int mk = Mathf.Clamp (ant.CompleteTourWithOutDepot.Count, 1, int.MaxValue); //m>0
+			int Dk = Mathf.Clamp (ant.TotalRouteWeight, 1, int.MaxValue);
+			inc = (Q / (L * K)) * ((Dk - dij) / (mk * Dk));
+		}
+
+		return inc;
 	}
 
 	//--------------------------------------
 	// Virtual Methods
 	//--------------------------------------
-	protected virtual VRPAntGameObject spawnAnts(VRPAnt ant, VRPNode node){
-		VRPAntGameObject antGO = Instantiate (pbAnt, vrp.Depot.transform.position, Quaternion.identity) as VRPAntGameObject; //the spawn
+	protected virtual VRPAntGameObject spawnAnts(VRPAnt ant, VRPNode node, bool pIsInitializationAnt=false){
+		VRPAntGameObject antGO = null;
+
+		if(!pIsInitializationAnt)
+			antGO = Instantiate (pbAnt, vrp.Depot.transform.position, Quaternion.identity) as VRPAntGameObject; //the spawn
+		else
+			antGO = Instantiate (pbAnt, node.IsDepot ? vrp.Depot.transform.position : vrp.NodeGOs.Find(n=>n.Node.Id.Equals(node.Id)).transform.position, Quaternion.identity) as VRPAntGameObject; //the spawn
+
 		VRPNodeGameObject nodeGO = node.IsDepot ? vrp.Depot : vrp.NodeGOs.Find(n=>n.Node.Id.Equals(node.Id));
-		//TODO for testing
+		//for testing
 //		int nodeIndex = Random.Range (0, vrp.NodeGOs.Count - 1);
 //		antGO.loadAnt(ant, vrp.NodeGOs[nodeIndex].transform, antSpeed, vrp.Depot.transform);
-		antGO.loadAnt(ant, nodeGO.transform, antSpeed, vrp.Depot.transform);
+
+		antGO.loadAnt(ant, nodeGO.transform, antSpeed, vrp.Depot.transform, pIsInitializationAnt);
 
 		return antGO;
 	}
@@ -572,7 +664,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Events
 	//--------------------------------------
-	public virtual void OnVRPLoaded(VRP pVRP){
+	public virtual void OnVRPLoaded(ACOVRP pVRP){
 		if (pVRP != null) {
 			vrp = pVRP;
 
@@ -582,8 +674,18 @@ public class ACOSolver : Singleton<ACOSolver>{
 				ants.Add (new VRPAnt(v));
 
 			//start ACO algorithm
-			StartCoroutine(ACO ());
+//			StartCoroutine(ACO ());
+			StartCoroutine(initEdges());
 		}
 	}
 
+	public virtual void OnPheromoneSpawned(VRPPheromoneGO pheromoneGO){
+		if (pheromoneTrails.ContainsKey (pheromoneGO.Edge)) {
+			pheromoneTrails [pheromoneGO.Edge].Add (pheromoneGO);
+		} else {
+			pheromoneTrails.Add (pheromoneGO.Edge, new List<VRPPheromoneGO> (){ pheromoneGO });
+		}
+
+//		Debug.Log ("Spawning at Edge: "+pheromoneGO.Edge.NodeA.Id+"-"+pheromoneGO.Edge.NodeB.Id);
+	}
 }

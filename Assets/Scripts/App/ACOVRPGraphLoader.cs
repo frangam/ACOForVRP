@@ -38,9 +38,6 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	private bool avoidCycleSameNode = true;
 
 	[SerializeField]
-	private float initialPheromone = 0.001f;
-
-	[SerializeField]
 	private string graphFileNamePrefx="graph";
 
 	[SerializeField]
@@ -56,22 +53,17 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	private VRPNodeGameObject pbNode;
 
 	[SerializeField]
-	private VRP vrp;
+	private ACOVRP vrp;
 
 	//--------------------------------------
 	// Events
 	//--------------------------------------
-	public delegate void VRPLoaded (VRP vrp);
+	public delegate void VRPLoaded (ACOVRP vrp);
 	public static event VRPLoaded OnVRPLoaded;
 
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
-	public float InitialPheromone {
-		get {
-			return this.initialPheromone;
-		}
-	}
 
 	//--------------------------------------
 	// Unity Methods
@@ -92,7 +84,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	//--------------------------------------
 	// Private Methods
 	//--------------------------------------
-	private VRP processVRPProblemFileContent(string content){
+	private ACOVRP processVRPProblemFileContent(string content){
 		string[] data = content.Split(new string[] {"CUSTOMERS_NODES:"}, System.StringSplitOptions.None);
 		string[] data2 = data[1].Split(new string[] {"\nVEHICLES:"}, System.StringSplitOptions.None);
 		string[] data3 = data2[1].Split(new string[] {"\nCOSTS:\ttravel time"}, System.StringSplitOptions.None);
@@ -103,7 +95,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 		List<VRPNode> nodes = new List<VRPNode> ();
 		List<ACOVRPEdge> edges = new List<ACOVRPEdge>();
 		List<VRPVehicle> vehicles = new List<VRPVehicle>();
-		VRPGraph graph = null;
+		ACOVRPGraph graph = null;
 		//depot
 		string[] depotValues = depots[2].Split(new string[] {"\t"}, System.StringSplitOptions.None);
 		VRPNode depotNode = new VRPNode (depotValues [0], true, Int32.Parse(depotValues [2])*(-1));
@@ -143,20 +135,20 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 
 					if (symetricEdge != null) {
 						if (symetricDistance)
-							edges.Add (new ACOVRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, initialPheromone));
+							edges.Add (new ACOVRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, symetricEdge.Weight, ACOSolver.Instance.InitialPheromone));
 						else
-							edges.Add (new ACOVRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, initialPheromone));
+							edges.Add (new ACOVRPEdge (symetricEdge.NodeB, symetricEdge.NodeA, cost, ACOSolver.Instance.InitialPheromone));
 					} else {
-						edges.Add (new ACOVRPEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, initialPheromone));
+						edges.Add (new ACOVRPEdge (nodes.Find (n => n.Id.Equals (nodeA)), nodes.Find (n => n.Id.Equals (nodeB)), cost, ACOSolver.Instance.InitialPheromone));
 					}
 				}
 			}
 		}
 
 
-		graph = new VRPGraph(nodes, edges);
+		graph = new ACOVRPGraph(nodes, edges);
 
-		return new VRP(graph, vehicles, this.depot);
+		return new ACOVRP(graph, vehicles, this.depot);
 	}
 
 	private List<VRPNodeGameObject> spawnNodes(List<VRPNode> nodes, Vector3 centerPos=default(Vector3)){

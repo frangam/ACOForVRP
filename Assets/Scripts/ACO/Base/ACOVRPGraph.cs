@@ -22,53 +22,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class ACOEdge<N> : WEdge<N> where N:Node {
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-	[SerializeField]
-	private double pheromone;
-
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-	private double previousPheromone;
-
-	//--------------------------------------
-	// Getters & Setters
-	//--------------------------------------
-	public double Pheromone {
-		get {
-			return this.pheromone;
-		}
-		set {
-			previousPheromone = pheromone;
-			pheromone = value;
-		}
-	}
-
-	public double PreviousPheromone {
-		get {
-			return this.previousPheromone;
-		}
-		set {
-			previousPheromone = value;
-		}
-	}
-
+public class ACOVRPGraph : VRPGraph<VRPNode, ACOVRPEdge> {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public ACOEdge(N a, N b, int pWeight, double pPheromone):base(a, b, pWeight){
-		previousPheromone = ACOSolver.Instance.InitialPheromone;
-		pheromone = pPheromone;
-	}
+	public ACOVRPGraph (): base(){}
+	public ACOVRPGraph (List<VRPNode> nodes, List<ACOVRPEdge> edges) : base (nodes, edges){}
 
 	//--------------------------------------
-	// Overriden Methods
+	// Virtual Methods
 	//--------------------------------------
-	public override string ToString ()
-	{
-		return string.Format ("[ACOEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}, prevPheromone={4}]", NodeA, NodeB, Weight, pheromone, previousPheromone);
+	public virtual void resetPheromone(){
+		foreach (ACOVRPEdge e in Edges)
+			e.Pheromone = ACOSolver.Instance.InitialPheromone;
 	}
 }

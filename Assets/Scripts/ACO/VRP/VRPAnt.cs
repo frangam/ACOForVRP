@@ -24,10 +24,48 @@ using UnityEngine;
 
 public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 	//--------------------------------------
+	// Getters && Setters
+	//--------------------------------------
+	public List<VRPNode> CompleteTourWithOutDepot{
+		get{
+			List<VRPNode> nodes = new List<VRPNode> ();
+
+			foreach (ACOVRPEdge e in Paths) {
+				VRPNode from = e.NodeA;
+				VRPNode to = e.NodeB;
+
+				if(checkConditionToAddNodeToCompleteTourWithOutDepot(nodes, from)){
+					nodes.Add (from);
+				}
+
+				if(checkConditionToAddNodeToCompleteTourWithOutDepot(nodes, to)){
+					nodes.Add (to);
+				}
+			}
+
+			return nodes;
+		}
+	}
+
+	public int TotalCustomers{
+		get{
+			return (Paths.Find(r=>r.NodeA.IsDepot && r.NodeB.IsDepot) != null) ? CompleteTourWithOutDepot.Count + 1 : CompleteTourWithOutDepot.Count;
+		}
+	}
+
+	//--------------------------------------
 	// Constructors
 	//--------------------------------------
 	public VRPAnt(VRPVehicle v):base(v){
 		
+	}
+
+	//--------------------------------------
+	// Virtual Methods
+	//--------------------------------------
+	protected virtual bool checkConditionToAddNodeToCompleteTourWithOutDepot (List<VRPNode> allNodes, VRPNode nodeToAdd)
+	{
+		return !nodeToAdd.IsDepot && base.checkConditionToAddNodeToCompleteTour (allNodes, nodeToAdd);
 	}
 
 	//--------------------------------------
@@ -46,4 +84,6 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 		//only we can add a node if this is not present in the current tour or if it is the depot first time (start of the tour) or the second (end of the tour)
 		return (nodeToAdd.IsDepot && totalDepotsInTour < 2) || base.checkConditionToAddNodeToCompleteTour (allNodes, nodeToAdd);
 	}
+
+
 }

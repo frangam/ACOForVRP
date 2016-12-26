@@ -22,23 +22,18 @@ using System.Collections;
 using System.Collections.Generic;
 
 [System.Serializable]
-public class VRPGraph: WeightedGraph<VRPNode, ACOVRPEdge> {
+public class VRPGraph<N, E>: WeightedGraph<N, E> where N:VRPNode where E:WEdge<N> {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
 	public VRPGraph():base(){}
-	public VRPGraph(List<VRPNode> nodes, List<ACOVRPEdge> edges): base(nodes, edges, true){} //is a complete graph
+	public VRPGraph(List<N> nodes, List<E> edges): base(nodes, edges, true){} //is a complete graph
 
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
 	public void resetNodesVisited(){
-		foreach (VRPNode n in Nodes)
+		foreach (N n in Nodes)
 			n.Visited = false;
-	}
-
-	public void resetPheromone(){
-		foreach (ACOVRPEdge e in Edges)
-			e.Pheromone = ACOVRPGraphLoader.Instance.InitialPheromone;
 	}
 }

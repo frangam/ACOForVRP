@@ -12,6 +12,7 @@ TextureImporter:
     21300010: chicken
     21300012: pheromone
     21300014: worker_ant_big
+    21300016: detail
   serializedVersion: 4
   mipmaps:
     mipMapMode: 0
@@ -168,6 +169,19 @@ TextureImporter:
         height: 81
       alignment: 9
       pivot: {x: 0.5, y: 0.49382716}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      tessellationDetail: -1
+    - serializedVersion: 2
+      name: detail
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 243
+        width: 28
+        height: 20
+      alignment: 9
+      pivot: {x: 0.21428572, y: -0.3}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       tessellationDetail: -1

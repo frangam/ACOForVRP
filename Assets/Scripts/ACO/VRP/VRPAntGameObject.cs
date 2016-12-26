@@ -21,13 +21,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOVRPEdge> {
+public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOVRPEdge,VRPPheromoneGO> {
+
 
 	public override ACOVRPEdge createRoute (Graph<VRPNode, ACOVRPEdge> graph, VRPNode from, VRPNode to)
 	{
 		ACOVRPEdge edge = base.createRoute (graph, from, to);
 		edge.Pheromone = ACOSolver.Instance.pheromoneLocalUpdate (edge);
-
+		CurrentPheromoneInfluence = ACOSolver.Instance.globalUpdateResult (edge, (VRPAnt) Ant);
 
 		return edge;
 	}

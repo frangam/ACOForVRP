@@ -21,7 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N> {
+public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge<N> where P:PheromoneGameObject<N,E> {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
@@ -42,9 +42,17 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 	private bool canMove = false;
 	private bool isCommingBack = false;
 	private bool destinationReached = false;
-	private float currentPheromoneInfluence = 0.1f;
+	private double currentPheromoneInfluence = 0.1f;
 	private bool canSpawnPheromone = true;
 	private Color pheromoneColor;
+	private E currentEdgeThrough;
+	private bool isInitializationAnt = false;
+
+	//--------------------------------------
+	// Events
+	//--------------------------------------
+	public delegate void PheromoneSpawn(P pheromoneGO);
+	public static event PheromoneSpawn OnPheromoneSpawned;
 
 	//--------------------------------------
 	// Getters & Setters
@@ -75,11 +83,20 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 		}
 	}
 
+	public double CurrentPheromoneInfluence {
+		get {
+			return this.currentPheromoneInfluence;
+		}
+		set {
+			currentPheromoneInfluence = value;
+		}
+	}
+
 	//--------------------------------------
 	// Unity Methods
 	//--------------------------------------
 	protected virtual void Awake(){
-		pheromoneColor = new Color(Random.Range(0, 255)/255f, Random.Range(0, 255)/255f, Random.Range(0, 255)/255f);
+		
 	}
 
 	protected virtual void OnEnable(){
@@ -124,14 +141,20 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
-	public virtual void loadAnt(Ant<T,N,E> a, Transform pDestination, float pSpeed, Transform pDepot){
+	public virtual void loadAnt(Ant<T,N,E> a, Transform pDestination, float pSpeed, Transform pDepot, bool pIsInitializationAnt=false){
 		destinationReached = false;
 		ant = a;
 		destination = pDestination;
-		canMove = true;
+		canMove = !isInitializationAnt;
 		isCommingBack = false;
-		movSpeed = pSpeed;
+		movSpeed = !isInitializationAnt ? pSpeed : pSpeed * 1000;
 		depot = pDepot;
+		isInitializationAnt = pIsInitializationAnt;
+
+		if(isInitializationAnt)
+			pheromoneColor = Color.white;
+		else
+			pheromoneColor = new Color(Random.Range(0, 255)/255f, Random.Range(0, 255)/255f, Random.Range(0, 255)/255f);
 	}
 
 	public virtual void resetAnt(){
@@ -143,18 +166,19 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 
 	public virtual E createRoute(Graph<N, E> graph, N from, N to){
 		E edge = ant.createRoute (graph, from, to);
-//		currentPheromoneInfluence = edge.Pheromone;
 		return edge;
 	}
 
-	public virtual void comeBackToDepot(){
+	public virtual void comeBackToDepot(E edgeThrough){
+		currentEdgeThrough = edgeThrough;
 		destinationReached = false;
 		isCommingBack = true;
 		destination = depot;
 		canMove = true;
 	}
 
-	public virtual void goToNextNode(Transform newDestination){
+	public virtual void goToNextNode(E edgeThrough, Transform newDestination){
+		currentEdgeThrough = edgeThrough;
 		destinationReached = false;
 		destination = newDestination;
 		canMove = true;
@@ -167,10 +191,11 @@ public class AntGameObject<T,N,E> : MonoBehaviour where N:Node where E:ACOEdge<N
 
 	public virtual IEnumerator spawnPheromone(){
 		canSpawnPheromone = false;
-		yield return new WaitForSeconds (currentPheromoneInfluence*(1/movSpeed));
-		GameObject p = Instantiate (ACOSolver.Instance.PbPheromone, transform.position, Quaternion.identity);
+		yield return new WaitForSeconds ((float) currentPheromoneInfluence*(movSpeed*Time.deltaTime));
+		P p = Instantiate (ACOSolver.Instance.PbPheromone, transform.position, Quaternion.identity) as P;
+		p.Edge = currentEdgeThrough;
 		p.GetComponent<SpriteRenderer> ().color = pheromoneColor;
-		ACOSolver.Instance.CurrentPheromoneTrails.Add (p);
+		OnPheromoneSpawned (p);
 		canSpawnPheromone = true;
 	}
 

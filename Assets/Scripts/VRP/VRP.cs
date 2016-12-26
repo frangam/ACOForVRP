@@ -23,21 +23,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class VRP {
+public class VRP<NGO,N,E,V> where NGO:VRPNodeGameObject where N:VRPNode where E:WEdge<N> where V:VRPVehicle {
 	//--------------------------------------
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
-	private List<VRPNodeGameObject> nodeGOs;
+	private List<NGO> nodeGOs;
 
 	[SerializeField]
-	private VRPGraph graph;
+	private VRPGraph<N,E> graph;
 
 	[SerializeField]
-	private List<VRPVehicle> vehicles;
+	private List<V> vehicles;
 
 	[SerializeField]
-	private VRPNodeGameObject depot;
+	private NGO depot;
 
 	//--------------------------------------
 	// Getters & Setters
@@ -46,7 +46,7 @@ public class VRP {
 	/// Nodes GameObjects
 	/// </summary>
 	/// <value>The go nodes.</value>
-	public List<VRPNodeGameObject> NodeGOs{
+	public List<NGO> NodeGOs{
 		get {
 			return this.nodeGOs;
 		}
@@ -55,7 +55,7 @@ public class VRP {
 		}
 	}
 
-	public VRPGraph Graph {
+	public VRPGraph<N,E> Graph {
 		get {
 			return this.graph;
 		}
@@ -64,7 +64,7 @@ public class VRP {
 		}
 	}
 
-	public List<VRPVehicle> Vehicles {
+	public List<V> Vehicles {
 		get {
 			return this.vehicles;
 		}
@@ -73,7 +73,7 @@ public class VRP {
 		}
 	}
 
-	public VRPNodeGameObject Depot {
+	public NGO Depot {
 		get {
 			return this.depot;
 		}
@@ -86,8 +86,8 @@ public class VRP {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public VRP(VRPGraph pGraph, List<VRPVehicle> pVehicles, VRPNodeGameObject pDepot):this(pGraph, pVehicles, pDepot, new List<VRPNodeGameObject>()){}
-	public VRP(VRPGraph pGraph, List<VRPVehicle> pVehicles, VRPNodeGameObject pDepot, List<VRPNodeGameObject> go){
+	public VRP(VRPGraph<N,E> pGraph, List<V> pVehicles, NGO pDepot):this(pGraph, pVehicles, pDepot, new List<NGO>()){}
+	public VRP(VRPGraph<N,E> pGraph, List<V> pVehicles, NGO pDepot, List<NGO> go){
 		nodeGOs = go;
 		graph = pGraph;
 		vehicles = pVehicles;

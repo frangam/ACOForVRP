@@ -17,34 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 [System.Serializable]
-public class ACOVRPEdge : ACOEdge<VRPNode>  {
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-
-
-	//--------------------------------------
-	// Getters & Setters
-	//--------------------------------------
-
-
+public class ACOVRP : VRP<VRPNodeGameObject, VRPNode, ACOVRPEdge, VRPVehicle> {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public ACOVRPEdge(VRPNode a, VRPNode b, int pWeight, double pPheromone):base(a, b, pWeight, pPheromone){
-		
-	}
-
-	//--------------------------------------
-	// Overriden Methods
-	//--------------------------------------
-	public override string ToString ()
-	{
-		return string.Format ("[ACOVRPEdge: nodeA={0}, nodeB={1}, weight={2}, pheromone={3}]", NodeA, NodeB, Weight, Pheromone);
-	}
-	
+	public ACOVRP (VRPGraph<VRPNode, ACOVRPEdge> pGraph, List<VRPVehicle> pVehicles, VRPNodeGameObject pDepot) : base (pGraph, pVehicles, pDepot){}
+	public ACOVRP (VRPGraph<VRPNode, ACOVRPEdge> pGraph, List<VRPVehicle> pVehicles, VRPNodeGameObject pDepot, List<VRPNodeGameObject> go) : base (pGraph, pVehicles, pDepot, go){}
 }
