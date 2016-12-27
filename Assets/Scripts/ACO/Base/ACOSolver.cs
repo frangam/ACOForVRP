@@ -38,7 +38,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private float antSpeed = 2;
 
 	[SerializeField]
-	private bool improvedACO = false;
+	private bool improvedACO = true;
 
 	[SerializeField]
 	private bool TwoOPTForward = true;
@@ -53,24 +53,33 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private double initialPheromone = 0.001;
 
 	[SerializeField]
-	private float pheromoneInfluence = 1f;
+	private float pheromoneInfluence = 2f;
 
 	[SerializeField]
-	private float visibilityInfluence = 5;
+	private float visibilityInfluence = 1;
 
 	[SerializeField]
 	[Range(0,1)]
-	private float ro = 0.1f;
+	private float ro = 0.88f;
 
 	[SerializeField]
 	[Range(0,1)]
 	private float q0 = 0.1f;
 
 	[SerializeField]
+	private float IACO_Q = 1000f;
+
+	[SerializeField]
 	private float startDelay = 0.5f;
 
 	[SerializeField]
 	private bool visualInitPheromone = false;
+
+	[SerializeField]
+	private float antsInitMovSpeed = 10;
+
+	[SerializeField]
+	private float antsSolMovSpeed = 5;
 
 	//--------------------------------------
 	// Private Attributes
@@ -155,33 +164,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 			//delete pheromone trails GameObjects of previous iteration
 			if (i > 0) {
-				Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> phForDeleting = new Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> ();
-				foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
-					List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
-					int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
-					double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*1.1;
-					int rest = (int)(res);
-
-					if (rest <= 0) {
-						foreach (VRPPheromoneGO p in pheromoneTrails[pEd])
-							li.Add (p);
-					} else {
-						for (int j = 0; j < Mathf.Clamp(pheromoneTrails [pEd].Count - rest, 1, pheromoneTrails [pEd].Count); j++)
-							li.Add (pheromoneTrails [pEd] [j]);
-					}
-						
-					phForDeleting.Add (pEd, li);
-				}
-
-				//delete pheromone gameobjects
-				if (phForDeleting.Count > 0 && phForDeleting.Count > 0) {
-					foreach (ACOVRPEdge e in phForDeleting.Keys) {
-						foreach (VRPPheromoneGO go in phForDeleting[e]) {
-							pheromoneTrails [e].Remove (go);
-							Destroy (go.gameObject);
-						}
-					}
-				}
+				updatePheromoneGameObjects ();
 			}
 
 			//--------------------------------------
@@ -314,6 +297,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 			}
 			Debug.Log (tour);
 		}
+
+		StartCoroutine(drawSolution ());
 	}
 
 	private IEnumerator initEdges(){
@@ -326,6 +311,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 				if(find != null){
 					VRPAntGameObject aGO = spawnAnts (ants[0], e.NodeA, true);
+					aGO.MovSpeed = antsInitMovSpeed;
 					aGO.goToNextNode (e, find.transform);
 					while (!aGO.DestinationReached)
 						yield return null;
@@ -335,6 +321,73 @@ public class ACOSolver : Singleton<ACOSolver>{
 		}
 
 		StartCoroutine (ACO());
+	}
+
+	private IEnumerator drawSolution(){
+		updatePheromoneGameObjects ();
+
+		yield return new WaitForSeconds (startDelay);
+
+		foreach (VRPAnt ant in ants) {
+			VRPAntGameObject aGO = antGOs.Find(a=>a.Ant.TheObject.Id.Equals(ant.TheObject.Id));
+			if (aGO == null) {
+				aGO = spawnAnts (ant, vrp.Depot.Node);
+			} else {
+				aGO.gameObject.SetActive (true);
+			}
+
+			foreach (ACOVRPEdge e in ant.Paths) {
+				if (!e.NodeA.Id.Equals (e.NodeB.Id)) {
+					//				Debug.Log (e.NodeA.Id+"-"+e.NodeB.Id);
+					VRPNodeGameObject find = vrp.NodeGOs.Find (n => n.Node.Id.Equals (e.NodeB.Id));
+
+					if (find != null || e.NodeB.IsDepot) {
+						aGO.MovSpeed = antsSolMovSpeed;
+
+						if (!e.NodeB.IsDepot)
+							aGO.goToNextNode (e, find.transform);
+						else
+							aGO.comeBackToDepot (e);
+						
+						while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
+							yield return null;
+//						Destroy (aGO.gameObject);
+					}
+				}
+			}
+		}
+	}
+
+	private void updatePheromoneGameObjects(bool deleteAll = false){
+		Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> phForDeleting = new Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> ();
+		foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
+			List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
+			int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
+			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*3;
+			int rest = !deleteAll ? (int)(res) : 0;
+
+			pheromoneTrails [pEd].Shuffle ();
+
+			if (rest <= 0) {
+				foreach (VRPPheromoneGO p in pheromoneTrails[pEd])
+					li.Add (p);
+			} else {
+				for (int j = 0; j < Mathf.Clamp(pheromoneTrails [pEd].Count - rest, 1, pheromoneTrails [pEd].Count); j++)
+					li.Add (pheromoneTrails [pEd] [j]);
+			}
+
+			phForDeleting.Add (pEd, li);
+		}
+
+		//delete pheromone gameobjects
+		if (phForDeleting.Count > 0 && phForDeleting.Count > 0) {
+			foreach (ACOVRPEdge e in phForDeleting.Keys) {
+				foreach (VRPPheromoneGO go in phForDeleting[e]) {
+					pheromoneTrails [e].Remove (go);
+					Destroy (go.gameObject);
+				}
+			}
+		}
 	}
 
 	private List<VRPAnt> improveSolutionWithTwoOPT(List<VRPAnt> currentSolution, VRPNode depot){
@@ -636,7 +689,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 	public double pheromoneImprovedIncrement(ACOVRPEdge edgeIJ, VRPAnt ant){
 		double inc = 0.0;
-		int Q = ants[0].TheObject.Quantity;
+		float Q = IACO_Q;//ants[0].TheObject.Quantity;
 		int L = ants.Sum(a=>a.TotalRouteWeight);
 		int K = Mathf.Clamp(ants.Count, 1, int.MaxValue);
 		int dij = edgeIJ.Weight;

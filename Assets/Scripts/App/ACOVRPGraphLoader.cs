@@ -56,6 +56,9 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	private bool shuffleNodes = true;
 
 	[SerializeField]
+	private bool fixEdgeWeightWithRealDist = true;
+
+	[SerializeField]
 	private ACOVRP vrp;
 
 	//--------------------------------------
@@ -177,6 +180,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 		int totalNodes = nodes.Count;
 		nodes.Sort ();
 
+		//spawn around the depot
 		for (int i = 0; i < totalNodes; i++){
 			float progress = (i * 1.0f) / totalNodes; //progress 0-1
 			float angle = progress * Mathf.PI * 2; //in radians
@@ -191,12 +195,24 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			y = y > 0 ? y + progress + 0.5f : y - progress - 0.5f;
 
 			node.updatePolarCoords (x, y);
-			pos = new Vector3(x, y, 0) + centerPos;
+			pos = new Vector3(x, y, 0);
 
 			nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
 			nodeGO.loadNode(node); //load node info
 			nodeGOs.Add(nodeGO);
-		}   
+		}
+
+		//fix distance
+		if (fixEdgeWeightWithRealDist) {
+			foreach (ACOVRPEdge e in vrp.Graph.Edges) {
+				VRPNodeGameObject a = nodeGOs.Find (x => x.Node.Id.Equals (e.NodeA.Id));
+				VRPNodeGameObject b = nodeGOs.Find (x => x.Node.Id.Equals (e.NodeB.Id));
+
+				if (a != null && b != null) {
+					e.Weight = (int)Vector3.Distance (b.transform.position, a.transform.position);
+				}
+			}
+		}
 
 		return nodeGOs;
 	}

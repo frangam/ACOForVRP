@@ -35,6 +35,18 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 	private bool destroyWhenDepotReached = false;
 
 	//--------------------------------------
+	// Getters & Setters
+	//--------------------------------------
+	public float MovSpeed {
+		get {
+			return this.movSpeed;
+		}
+		set {
+			movSpeed = value;
+		}
+	}
+
+	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
 	private Transform depot;
@@ -149,7 +161,7 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 		destination = pDestination;
 		canMove = !isInitializationAnt;
 		isCommingBack = false;
-		movSpeed = !isInitializationAnt ? pSpeed : (pSpeed * 10);
+		movSpeed = pSpeed;
 		depot = pDepot;
 
 		if (isInitializationAnt) {
