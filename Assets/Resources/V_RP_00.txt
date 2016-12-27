@@ -24,7 +24,7 @@ id	label	weight	processingtime	percentageintimewindow	possibleorigins	possiblede
 
 VEHICLES:
 id	label	multitrips	capacity
-01		false	10
+01		false	13
 02		false	13
 
 COSTS:	travel time

@@ -17,29 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class VRPAntGameObject : AntGameObject<VRPVehicle,VRPNode, ACOVRPEdge,VRPPheromoneGO> {
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-	[SerializeField]
-	private TextMesh quantityTxt;
-
-	//--------------------------------------
-	// Overriden Methods
-	//--------------------------------------
-	public override ACOVRPEdge createRoute (Graph<VRPNode, ACOVRPEdge> graph, VRPNode from, VRPNode to)
-	{
-		ACOVRPEdge edge = base.createRoute (graph, from, to);
-		edge.Pheromone = ACOSolver.Instance.pheromoneLocalUpdate (edge);
-		CurrentPheromoneInfluence = ACOSolver.Instance.globalUpdateResult (edge, (VRPAnt) Ant);
-
-		if (quantityTxt)
-			quantityTxt.text = Ant.TheObject.Quantity.ToString ();
-
-		return edge;
-	}
+public enum SettingType{
+	ANT_SPEED, 
+	RO, 
+	ALPHA, 
+	BETA, 
+	Q,
+	ITERATION
 }

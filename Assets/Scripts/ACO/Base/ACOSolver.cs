@@ -67,7 +67,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private float q0 = 0.1f;
 
 	[SerializeField]
-	private float IACO_Q = 1000f;
+	private float impIACO_Q = 1000f;
 
 	[SerializeField]
 	private float startDelay = 0.5f;
@@ -81,6 +81,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 	[SerializeField]
 	private float antsSolMovSpeed = 5;
 
+	[SerializeField]
+	private Color[] antColors;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -88,6 +91,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private List<VRPAnt> ants;
 	private Dictionary<ACOVRPEdge,List<VRPPheromoneGO>> pheromoneTrails = new Dictionary<ACOVRPEdge,List<VRPPheromoneGO>>();
 	private int currentIteration = 0;
+	private bool vrpLoaded = false;
+	private VRPAntGameObject curAntGO;
 
 	/// <summary>
 	/// The Ant GameObjects
@@ -97,6 +102,22 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
+	public int CurrentIteration {
+		get {
+			return this.currentIteration;
+		}
+		set {
+			currentIteration = value;
+		}
+	}
+	public float ImpIACO_Q {
+		get {
+			return this.impIACO_Q;
+		}
+		set {
+			impIACO_Q = value;
+		}
+	}
 	public double InitialPheromone {
 		get {
 			return this.initialPheromone;
@@ -112,11 +133,53 @@ public class ACOSolver : Singleton<ACOSolver>{
 		get {
 			return this.pheromoneInfluence;
 		}
+		set{
+			this.pheromoneInfluence = value;
+		}
 	}
 
 	public float VisibilityInfluence {
 		get {
 			return this.visibilityInfluence;
+		}
+		set{
+			this.visibilityInfluence = value;
+		}
+	}
+
+	public float AntSpeed {
+		get {
+			return this.antSpeed;
+		}
+		set {
+			antSpeed = value;
+		}
+	}
+
+	public int Iterations {
+		get {
+			return this.iterations;
+		}
+		set {
+			iterations = value;
+		}
+	}
+
+	public float Ro {
+		get {
+			return this.ro;
+		}
+		set {
+			ro = value;
+		}
+	}
+
+	public VRPAntGameObject CurAntGO {
+		get {
+			return this.curAntGO;
+		}
+		set {
+			curAntGO = value;
 		}
 	}
 		
@@ -157,6 +220,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		for (int i = 0; i < iterations; i++) {
 			currentIteration = i;
+			UIManager.Instance.updateIteration (currentIteration);
 			VRPAnt bestAnt = ants[0];
 			VRPNode depot = vrp.Graph.Nodes.Find(n => n.IsDepot); //first, the depot
 			vrp.Graph.resetNodesVisited ();
@@ -174,11 +238,13 @@ public class ACOSolver : Singleton<ACOSolver>{
 			while(!allNodesVisited(vrp.Graph.Nodes)){
 
 				//for each ant
+				int aIndex = 1;
 				foreach(VRPAnt ant in ants) {
 					ant.Paths = new List<ACOVRPEdge> ();
 					VRPNode currentNode = depot;
 					currentNode.Visited = true;
 					int quantity = ant.TheObject.Quantity;
+					UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
 
 					//spawn ant GameObject
 					VRPAntGameObject aGO = antGOs.Find(a=>a.Ant.TheObject.Id.Equals(ant.TheObject.Id));
@@ -194,6 +260,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 					else if(i > 0 && aGO != null && !aGO.DestroyWhenDepotReached){
 						aGO.gameObject.SetActive (true);
 					}
+					curAntGO = aGO;
+
+					if (antColors.Length > aIndex) {
+						aGO.PheromoneColor = antColors [aIndex];
+						aIndex++;
+					}
 						
 
 					while(quantity > 0 && !allNodesVisited(vrp.Graph.Nodes)){
@@ -201,6 +273,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 						if (nextBestNode == null || nextBestNode.IsDepot || nextBestNode.Demand > quantity) {
 							quantity = 0;
+							UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
 
 							//comming back to the depot
 //							ant.createRoute (vrp.Graph, currentNode, depot);
@@ -223,6 +296,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 							aGO.goToNextNode (edgeThrough, vrp.NodeGOs.Find (n => n.Node.Id.Equals (nextBestNode.Id)).transform);
 							while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
 								yield return null;
+							UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
 
 							if (quantity == 0 || allNodesVisited(vrp.Graph.Nodes)) {
 								//comming back to the depot
@@ -237,6 +311,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 							}
 						}
 					}
+
+					yield return new WaitForSeconds (0.25f);
 
 //					//get the best ant with the minimum route distance cost
 //					if(ant != bestAnt && ant.RouteDistanceCost < bestAnt.RouteDistanceCost){
@@ -652,6 +728,16 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
+	public void startRun(){
+		if (vrpLoaded && vrp != null) {
+			//start ACO algorithm
+			if (visualInitPheromone)
+				StartCoroutine (initEdges ());
+			else
+				StartCoroutine (ACO ());
+		}
+	}
+
 	public double pheromoneLocalUpdate(ACOVRPEdge edge){
 		double newPhe = !improvedACO ? ((1.0 - PheromoneInfluence) * edge.Pheromone) + PheromoneInfluence : edge.Pheromone;
 		vrp.Graph.Edges.Find (ed => ed.Id.Equals (edge.Id)).Pheromone = newPhe;
@@ -689,7 +775,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 	public double pheromoneImprovedIncrement(ACOVRPEdge edgeIJ, VRPAnt ant){
 		double inc = 0.0;
-		float Q = IACO_Q;//ants[0].TheObject.Quantity;
+		float Q = impIACO_Q;//ants[0].TheObject.Quantity;
 		int L = ants.Sum(a=>a.TotalRouteWeight);
 		int K = Mathf.Clamp(ants.Count, 1, int.MaxValue);
 		int dij = edgeIJ.Weight;
@@ -738,11 +824,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			foreach (VRPVehicle v in vrp.Vehicles)
 				ants.Add (new VRPAnt(v));
 
-			//start ACO algorithm
-			if(visualInitPheromone)
-				StartCoroutine(initEdges());
-			else
-				StartCoroutine(ACO ());
+			vrpLoaded = true;
 		}
 	}
 

@@ -34,17 +34,6 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 	[SerializeField]
 	private bool destroyWhenDepotReached = false;
 
-	//--------------------------------------
-	// Getters & Setters
-	//--------------------------------------
-	public float MovSpeed {
-		get {
-			return this.movSpeed;
-		}
-		set {
-			movSpeed = value;
-		}
-	}
 
 	//--------------------------------------
 	// Private Attributes
@@ -75,6 +64,22 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 		}
 		set {
 			ant = value;
+		}
+	}
+	public float MovSpeed {
+		get {
+			return this.movSpeed;
+		}
+		set {
+			movSpeed = value;
+		}
+	}
+	public Color PheromoneColor {
+		get {
+			return this.pheromoneColor;
+		}
+		set {
+			pheromoneColor = value;
 		}
 	}
 	public bool IsCommingBack {
@@ -148,6 +153,14 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 			else if (canSpawnPheromone)
 				StartCoroutine (spawnPheromone ());
 		}
+	}
+
+	protected virtual void Update(){
+
+	}
+
+	protected virtual void LateUpdate(){
+
 	}
 
 	//--------------------------------------

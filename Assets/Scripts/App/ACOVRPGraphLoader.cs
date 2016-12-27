@@ -75,12 +75,36 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	// Unity Methods
 	//--------------------------------------
 	void Awake () {
-		DirectoryInfo di = new DirectoryInfo ("Assets/Resources");
-		FileInfo[] files = di.GetFiles (graphFileNamePrefx+"*.txt"); //avoiding .meta files
-		int graphIndex = UnityEngine.Random.Range (0,files.Length-1); //get randomly an index for selecting a graph file
-		FileInfo selectedFile = files [graphIndex];
-		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
-		string fileContent = ta.text; //the graph file content
+		load ();
+	}
+
+	//--------------------------------------
+	// Public Methods
+	//--------------------------------------
+	public void load(string path=""){
+		FileInfo selectedFile = null;
+
+		if (path != "") {
+			selectedFile = new FileInfo (path);
+		} else {
+			DirectoryInfo di = new DirectoryInfo ("Assets/Resources");
+			FileInfo[] files = di.GetFiles (graphFileNamePrefx+"*.txt"); //avoiding .meta files
+			int graphIndex = UnityEngine.Random.Range (0,files.Length-1); //get randomly an index for selecting a graph file
+			selectedFile = files [graphIndex];
+		}
+
+		//clean previous node gameobjects spawned
+		if (vrp.NodeGOs != null && vrp.NodeGOs.Count > 0) {
+			foreach (VRPNodeGameObject g in new List<VRPNodeGameObject> (vrp.NodeGOs)) {
+				vrp.NodeGOs.Remove (g);
+				Destroy (g.gameObject);
+			}
+		}
+
+
+//		selectedFile.OpenText ().ReadToEnd ();
+//		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
+		string fileContent = selectedFile.OpenText ().ReadToEnd (); // ta.text; //the graph file content
 		vrp = processVRPProblemFileContent (fileContent); //create the vrp graph
 		List<VRPNodeGameObject> nodeGOs = spawnNodes (vrp.Graph.Nodes.Where( x => !x.IsDepot).ToList<VRPNode>(), depot.transform.position);
 		vrp.NodeGOs = nodeGOs;

@@ -38,6 +38,11 @@ public class VRPVehicle {
 	private int quantity=1;
 
 	//--------------------------------------
+	// Private Attributes
+	//--------------------------------------
+	private int initialQuantity;
+
+	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
 	public string Id {
@@ -58,6 +63,12 @@ public class VRPVehicle {
 		}
 	}
 
+	public int InitialQuantity {
+		get {
+			return this.initialQuantity;
+		}
+	}
+
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
@@ -66,6 +77,7 @@ public class VRPVehicle {
 	public VRPVehicle(string pID, int pQuantity){
 		id = pID;
 		Quantity = pQuantity;
+		initialQuantity = quantity;
 	}
 
 	//--------------------------------------
