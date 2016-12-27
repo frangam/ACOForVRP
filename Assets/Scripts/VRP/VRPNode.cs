@@ -17,11 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+using System;
 using UnityEngine;
 using System.Collections;
 
 [System.Serializable]
-public class VRPNode: Node {
+public class VRPNode: Node, IComparable {
 	//--------------------------------------
 	// Constants
 	//--------------------------------------
@@ -38,6 +39,14 @@ public class VRPNode: Node {
 
 	[SerializeField]
 	private int processingTime;
+
+	[SerializeField]
+	private SphericalCoordinates polarCoords;
+
+	//--------------------------------------
+	// Private Attributes
+	//--------------------------------------
+	private float distance;
 
 	//--------------------------------------
 	// Getters & Setters
@@ -69,18 +78,60 @@ public class VRPNode: Node {
 		}
 	}
 
+	public SphericalCoordinates PolarCoords {
+		get {
+			return this.polarCoords;
+		}
+		set{
+			this.polarCoords = value;
+		}
+	}
+
+	/// <summary>
+	/// Coord X from Polar to Cartesian Coords
+	/// </summary>
+	/// <value>The X pol2 cart.</value>
+	public float XPol2Cart{
+		get{
+			return polarCoords.toCartesian.x;
+		}
+	}
+
+	/// <summary>
+	/// Coord Y from Polar to Cartesian Coords
+	/// </summary>
+	/// <value>The X pol2 cart.</value>
+	public float YPol2Cart{
+		get{
+			return polarCoords.toCartesian.y;
+		}
+	}
+
+	public float Distance {
+		get {
+			return this.distance;
+		}
+		set {
+			if(polarCoords == null)
+				polarCoords = new SphericalCoordinates (new Vector3(X, Y, 0));
+			polarCoords.SetRadius (value);
+			distance = value;
+		}
+	}
+
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public VRPNode():this("","",0,0,false,false,MIN_DEMAND,0){}
-	public VRPNode(VRPNode n):this(n.Id,n.Name, n.X, n.Y, n.Visited, false, n.Demand, 0){}
-	public VRPNode(string id, int pDemand):this(id, id, 0, 0, false, false, pDemand, 0){}
-	public VRPNode(string id, int pDemand, int pProcTime):this(id, id, 0, 0, false, false, pDemand, pProcTime){}
-	public VRPNode(string id, bool pIsDepot, int pDemand):this(id,id, 0, 0, false, pIsDepot, pDemand, 0){}
-	public VRPNode(string id, string name, float x, float y, bool visited, bool pIsDepot, int pDemand, int pProcTime):base(id,name, x, y, visited){
+	public VRPNode():this("","",0,0,false,false,MIN_DEMAND,0, 0.0f){}
+	public VRPNode(VRPNode n):this(n.Id,n.Name, n.X, n.Y, n.Visited, false, n.Demand, 0, 0.0f){}
+	public VRPNode(string id, int pDemand):this(id, id, 0, 0, false, false, pDemand, 0, 0.0f){}
+	public VRPNode(string id, int pDemand, int pProcTime, float distance=0.0f):this(id, id, 0, 0, false, false, pDemand, pProcTime){}
+	public VRPNode(string id, bool pIsDepot, int pDemand, float distance=0.0f):this(id,id, 0, 0, false, pIsDepot, pDemand, 0){}
+	public VRPNode(string id, string name, float x, float y, bool visited, bool pIsDepot, int pDemand, int pProcTime, float distance=0.0f):base(id,name, x, y, visited){
 		isDepot = pIsDepot;
 		Demand = pDemand;
 		processingTime = pProcTime;
+		Distance = distance;
 	}
 
 	//--------------------------------------
@@ -89,5 +140,38 @@ public class VRPNode: Node {
 	public override string ToString ()
 	{
 		return string.Format ("[VRPNode: name={0}, x={1}, y={2}, visited={3}, isDepot={4}, demand={5}, processingTime={6}]", Name, X, Y, Visited, IsDepot, Demand, processingTime);
+	}
+	public int CompareTo (object obj)
+	{
+		int res = 0;
+		VRPNode n = (VRPNode)obj;
+
+		if (this.distance > n.distance)
+			res = 1;
+		else if (this.distance < n.distance)
+			res = -1;
+
+		return res;
+	}
+
+
+	//--------------------------------------
+	// Public Methods
+	//--------------------------------------
+	public void updatePolarCoords(float pX, float pY){
+		updatePolarCoords (pX, pY, 1, float.MaxValue);
+	}
+	public void updatePolarCoords(float pX, float pY, float minRadius, float maxRadius){
+		X = pX;
+		Y = pY;
+		polarCoords = new SphericalCoordinates (new Vector3(X, Y, 0), minRadius, maxRadius);
+		polarCoords.SetRadius (this.distance);
+	}
+	public void updatePolarCoords(VRPNode node, float minRadius, float maxRadius){
+		updatePolarCoords (node.X, node.Y, node.distance, minRadius, maxRadius);
+	}
+	public void updatePolarCoords(float pX, float pY, float pDistance, float minRadius, float maxRadius){
+		this.distance = pDistance;
+		updatePolarCoords (pX, pY, minRadius, maxRadius);
 	}
 }

@@ -69,6 +69,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 	[SerializeField]
 	private float startDelay = 0.5f;
 
+	[SerializeField]
+	private bool visualInitPheromone = false;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -149,7 +152,6 @@ public class ACOSolver : Singleton<ACOSolver>{
 			VRPNode depot = vrp.Graph.Nodes.Find(n => n.IsDepot); //first, the depot
 			vrp.Graph.resetNodesVisited ();
 
-			//spawn initial ant to init pheromone value 
 
 			//delete pheromone trails GameObjects of previous iteration
 			if (i > 0) {
@@ -157,7 +159,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 				foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
 					List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
 					int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
-					double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*8;
+					double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*1.1;
 					int rest = (int)(res);
 
 					if (rest <= 0) {
@@ -276,20 +278,20 @@ public class ACOSolver : Singleton<ACOSolver>{
 			//2-optimal heuristic
 			ants = improveSolutionWithTwoOPT(ants, depot);
 
-			//update graph nodes with the best solution
-			List<VRPNode> bestSol = new List<VRPNode>(){depot};
-			foreach (VRPAnt a in ants) {
-				foreach (VRPNode n in a.CompleteTourWithOutDepot) {
-					bestSol.Add (n);
-					vrp.Graph.Nodes.Remove (n);
-				}
-			}
-			//sort nodes based on best solution
-			List<VRPNode> currentNodesInGraph = vrp.Graph.Nodes;
-			vrp.Graph.Nodes.RemoveAll (n => true);
-			vrp.Graph.Nodes.AddRange (bestSol);
-			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
-
+//			//update graph nodes with the best solution
+//			List<VRPNode> bestSol = new List<VRPNode>(){depot};
+//			foreach (VRPAnt a in ants) {
+//				foreach (VRPNode n in a.CompleteTourWithOutDepot) {
+//					bestSol.Add (n);
+//					vrp.Graph.Nodes.Remove (n);
+//				}
+//			}
+//			//sort nodes based on best solution
+//			List<VRPNode> currentNodesInGraph = vrp.Graph.Nodes;
+//			vrp.Graph.Nodes.RemoveAll (n => true);
+//			vrp.Graph.Nodes.AddRange (bestSol);
+//			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
+//
 			//optimal results
 			foreach (VRPAnt a in ants) {
 				string tour = "Impv: A"+a.TheObject.Id+">>";
@@ -317,12 +319,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private IEnumerator initEdges(){
 		yield return new WaitForSeconds (startDelay);
 
-//		VRPNode init = vrp.Graph.Edges [0].NodeA;
-//		VRPAntGameObject aGO = spawnAnts (ants[0], init, true);
-
 		foreach (ACOVRPEdge e in vrp.Graph.Edges) {
 			if (!e.NodeA.Id.Equals (e.NodeB.Id)) {
-				Debug.Log (e.NodeA.Id+"-"+e.NodeB.Id);
+//				Debug.Log (e.NodeA.Id+"-"+e.NodeB.Id);
 				VRPNodeGameObject find = vrp.NodeGOs.Find (n => n.Node.Id.Equals (e.NodeB.Id));
 
 				if(find != null){
@@ -356,13 +355,13 @@ public class ACOSolver : Singleton<ACOSolver>{
 					//locate in quadrant
 					int quadrant = 1;
 
-					if(n.X >= 0 && n.Y >= 0)
+					if(n.XPol2Cart >= 0 && n.YPol2Cart >= 0)
 						quadrant = 1;
-					else if (n.X <= 0 && n.Y >= 0)
+					else if (n.XPol2Cart <= 0 && n.YPol2Cart >= 0)
 						quadrant = 2;
-					else if (n.X <= 0 && n.Y <= 0)
+					else if (n.XPol2Cart <= 0 && n.YPol2Cart <= 0)
 						quadrant = 3;
-					else if (n.X >= 0 && n.Y <= 0)
+					else if (n.XPol2Cart >= 0 && n.YPol2Cart <= 0)
 						quadrant = 4;
 
 					//register node and quadrant in a dictionary
@@ -375,7 +374,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 					//calculate angles
 					if (!angles.ContainsKey (n)) {
-						float angle = Mathf.Asin ((n.Y - depot.Y) / (Mathf.Sqrt (Mathf.Pow (n.X - depot.X, 2) + Mathf.Pow (n.Y - depot.Y, 2))));
+						float angle = Mathf.Asin ((n.YPol2Cart - depot.YPol2Cart) / (Mathf.Sqrt (Mathf.Pow (n.XPol2Cart - depot.XPol2Cart, 2) + Mathf.Pow (n.YPol2Cart - depot.YPol2Cart, 2))));
 						angles.Add (n, angle);
 					}
 				}
@@ -406,12 +405,13 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 			//create Distance Matrix
 			foreach (VRPNode n in nodesInClusters[a]) {
-				distMatrix.Add (n, Mathf.Sqrt(Mathf.Pow(n.X-depot.X,2)+Mathf.Pow(n.Y-depot.Y,2)));
+				distMatrix.Add (n, Mathf.Sqrt(Mathf.Pow(n.XPol2Cart-depot.XPol2Cart,2)+Mathf.Pow(n.YPol2Cart-depot.YPol2Cart,2)));
+//				distMatrix.Add (n, vrp.Graph.Edges.Find(e=>e.NodeA.Id.Equals(n.Id) && e.NodeB.Id.Equals(depot.Id)).Weight);
 			}
 
 			//local search with min distance
 			List<VRPNode> shortestPath = new List<VRPNode>();
-			foreach (KeyValuePair<VRPNode,float> pair in distMatrix.OrderByDescending(p=>p.Value).ToList())
+			foreach (KeyValuePair<VRPNode,float> pair in distMatrix.OrderBy(p=>p.Value).ToList())
 				shortestPath.Add (pair.Key);
 			
 			List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //routes for ant asociated to the cluster
@@ -610,10 +610,19 @@ public class ACOSolver : Singleton<ACOSolver>{
 		//update pheromone in all of edges of the Graph
 		foreach (ACOVRPEdge edgeIJ in vrp.Graph.Edges) {
 			double newPhe = 0.0;
+
 			foreach (VRPAnt ant in ants) {
-				newPhe = globalUpdateResult (edgeIJ, ant);
+				if (improvedACO) {
+					double impInc = pheromoneImprovedIncrement (edgeIJ, ant);
+					newPhe += impInc;
+				}
+				else {
+					edgeIJ.Pheromone = ((1.0 - ro) * edgeIJ.Pheromone) + ro / ant.RouteDistanceCost;
+				}
 			}
-			edgeIJ.Pheromone = newPhe;
+
+			if(improvedACO)
+				edgeIJ.Pheromone = (ro * edgeIJ.Pheromone) + newPhe;
 		}
 	}
 
@@ -631,12 +640,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 		int L = ants.Sum(a=>a.TotalRouteWeight);
 		int K = Mathf.Clamp(ants.Count, 1, int.MaxValue);
 		int dij = edgeIJ.Weight;
-		bool routeIJInAntRoutes = ant.Paths.Find (edgeK => edgeK.NodeA.Id.Equals (edgeIJ.NodeA.Id) && edgeK.NodeB.Id.Equals (edgeIJ.NodeB.Id)) != null;
+		bool routeIJInAntPaths = ant.Paths.Find (edgeK => edgeK.NodeA.Id.Equals (edgeIJ.NodeA.Id) && edgeK.NodeB.Id.Equals (edgeIJ.NodeB.Id)) != null;
 
-		if (routeIJInAntRoutes) {
+		if (routeIJInAntPaths) {
 			int mk = Mathf.Clamp (ant.CompleteTourWithOutDepot.Count, 1, int.MaxValue); //m>0
 			int Dk = Mathf.Clamp (ant.TotalRouteWeight, 1, int.MaxValue);
-			inc = (Q / (L * K)) * ((Dk - dij) / (mk * Dk));
+			inc = (Q *1.0 / (L * K)) * ((Dk - dij)*1.0 / (mk * Dk));
 		}
 
 		return inc;
@@ -677,8 +686,10 @@ public class ACOSolver : Singleton<ACOSolver>{
 				ants.Add (new VRPAnt(v));
 
 			//start ACO algorithm
-//			StartCoroutine(ACO ());
-			StartCoroutine(initEdges());
+			if(visualInitPheromone)
+				StartCoroutine(initEdges());
+			else
+				StartCoroutine(ACO ());
 		}
 	}
 

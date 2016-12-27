@@ -50,7 +50,7 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	}
 
 	/// <summary>
-	/// Sorted based on the way the nodes of them are visited
+	/// Sorted based on the way the nodes of paths are visited
 	/// </summary>
 	/// <value>The paths.</value>
 	public List<E> Paths {

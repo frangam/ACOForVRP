@@ -149,7 +149,7 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 		destination = pDestination;
 		canMove = !isInitializationAnt;
 		isCommingBack = false;
-		movSpeed = !isInitializationAnt ? pSpeed : (pSpeed * 5);
+		movSpeed = !isInitializationAnt ? pSpeed : (pSpeed * 10);
 		depot = pDepot;
 
 		if (isInitializationAnt) {
@@ -209,6 +209,7 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 	private Color createPheromoneColor(){
 		//create a random color
 		Color res = new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+		res = res.GetContrast (false);
 		float hue = 0f, contrast = 0f, brigVal = 0f;
 
 		//get hue,constrast,and brigneths values
