@@ -363,7 +363,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 		foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
 			List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
 			int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
-			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*3;
+			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*1.5;
 			int rest = !deleteAll ? (int)(res) : 0;
 
 			pheromoneTrails [pEd].Shuffle ();

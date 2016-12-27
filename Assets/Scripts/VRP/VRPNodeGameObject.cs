@@ -28,6 +28,9 @@ public class VRPNodeGameObject : MonoBehaviour {
 	[SerializeField]
 	private VRPNode node;
 
+	[SerializeField]
+	private TextMesh demandTxt;
+
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
@@ -49,5 +52,8 @@ public class VRPNodeGameObject : MonoBehaviour {
 	//--------------------------------------
 	public void loadNode(VRPNode n){
 		node = n;
+
+		if (demandTxt)
+			demandTxt.text = node.Demand.ToString ();
 	}
 }
