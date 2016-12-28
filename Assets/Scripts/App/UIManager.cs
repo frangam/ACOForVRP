@@ -70,6 +70,16 @@ public class UIManager : Singleton<UIManager> {
 		settingsPnl.SetActive (false);
 	}
 
+	public void OnEnable(){
+		UniFileBrowser.OnFileOpened += OpenFile;
+	}
+	public void OnDisable(){
+		UniFileBrowser.OnFileOpened -= OpenFile;
+	}
+	public void OnDistroy(){
+		UniFileBrowser.OnFileOpened -= OpenFile;
+	}
+
 	public void Start(){
 		initialAntSpeed = ACOSolver.Instance.AntSpeed;
 	}
@@ -124,14 +134,18 @@ public class UIManager : Singleton<UIManager> {
 			pathChar = '\\';
 		}
 
-		if (UniFileBrowser.use.allowMultiSelect) {
-			UniFileBrowser.use.OpenFileWindow (OpenFiles);
+		if (UniFileBrowser.use.AllowMultiSelect) {
+			UniFileBrowser.use.OpenMultiFileWindow ();
 		}
 		else {
-			UniFileBrowser.use.OpenFileWindow (OpenFile);
+			UniFileBrowser.use.OpenFileWindow ();
 		}
 	}
 
+
+	//--------------------------------------
+	// Events
+	//--------------------------------------
 	public void OpenFile (string pathToFile) {
 		var fileIndex = pathToFile.LastIndexOf (pathChar);
 		string message = "You selected file: " + pathToFile.Substring (fileIndex+1, pathToFile.Length-fileIndex-1);
