@@ -825,6 +825,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 				ants.Add (new VRPAnt(v));
 
 			vrpLoaded = true;
+
+			Debug.Log ("VRP loaded");
 		}
 	}
 

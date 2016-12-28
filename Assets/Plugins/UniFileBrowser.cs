@@ -740,7 +740,7 @@ public class UniFileBrowser : MonoBehaviour {
 		#else
 		for (var touch in Input.touches) {
 		if (touch.tapCount == 2 && (fileAreaRect.Contains (mousePos) || volumeBoxRect.Contains (mousePos)) && frameDone) {
-		SelectFile();
+		StartCoroutine(SelectFile());
 		StartCoroutine(WaitForFrame());
 		messageWindowDelay = true;
 		break;
@@ -771,7 +771,7 @@ public class UniFileBrowser : MonoBehaviour {
 			}
 			if (GUI.Button(new Rect(fileWindowRect.width - buttonPositionX - (buttonSize.x+25)*2, fileWindowRect.height-buttonPositionY, buttonSize.x, buttonSize.y),
 				"Delete") ) {
-				DeleteFile();
+				StartCoroutine(DeleteFile());
 			}
 		}
 		if (!showMessageWindow) {
@@ -802,7 +802,7 @@ public class UniFileBrowser : MonoBehaviour {
 			}
 		}
 		if (GUI.Button (new Rect(fileWindowRect.width - buttonPositionX, fileWindowRect.height - buttonPositionY, buttonSize.x, buttonSize.y), (fileType == FileType.Save && (selectedFileNumber > -1 && selectedFileNumber < dirList.Count))? selectButtonText[(int)FileType.Open] : selectButtonText[(int)fileType])) {
-			SelectFile();
+			StartCoroutine(SelectFile());
 		}
 
 		if (!showMessageWindow) {
@@ -914,7 +914,7 @@ public class UniFileBrowser : MonoBehaviour {
 				return;
 			}
 			else if (selectedFileNumber >= 0 && selectedFileNumber < dirList.Count) {
-				SelectFile();
+				StartCoroutine(SelectFile());
 				return;
 			}
 		}
@@ -943,7 +943,7 @@ public class UniFileBrowser : MonoBehaviour {
 			CloseMessageWindow (true);
 		}
 		else {
-			SelectFile();
+			StartCoroutine(SelectFile());
 		}
 	}
 
@@ -1433,6 +1433,8 @@ public class UniFileBrowser : MonoBehaviour {
 							}
 						}
 					}
+
+					Debug.Log ("Select file in progress: "+selectFileInProgress);
 
 					if (selectFileInProgress) {
 						selectFileInProgress = false;

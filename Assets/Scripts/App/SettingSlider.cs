@@ -137,8 +137,8 @@ public class SettingSlider : MonoBehaviour {
 		case SettingType.ITERATION:
 			slider.wholeNumbers = true;
 			slider.minValue = 1;
-			slider.maxValue = int.MaxValue;
-			Value = ACOSolver.Instance.CurrentIteration;
+			slider.maxValue = 1000000;
+			Value = ACOSolver.Instance.Iterations;
 			break;
 		}
 		initialValue = Value;
@@ -165,7 +165,7 @@ public class SettingSlider : MonoBehaviour {
 			ACOSolver.Instance.ImpIACO_Q = Value;
 			break;
 		case SettingType.ITERATION:
-			ACOSolver.Instance.CurrentIteration = (int) Value;
+			ACOSolver.Instance.Iterations = (int) Value;
 			break;
 		}
 		TextValue.text = PreText + " " + StringValue;

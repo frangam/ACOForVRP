@@ -74,6 +74,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	//--------------------------------------
 	// Unity Methods
 	//--------------------------------------
+
 	void Awake () {
 		load ();
 	}
@@ -82,33 +83,53 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	// Public Methods
 	//--------------------------------------
 	public void load(string path=""){
-		FileInfo selectedFile = null;
+//		FileInfo selectedFile = null;
+		string fileContent = "";
 
-		if (path != "") {
-			selectedFile = new FileInfo (path);
+//		if (path != "") {
+////			selectedFile = new FileInfo (path);
+//		} else {
+////			DirectoryInfo di = new DirectoryInfo (Application.isEditor ? "Assets/Resources" : Application.persistentDataPath+ "/Assets/Resources");
+////			FileInfo[] files = di.GetFiles (graphFileNamePrefx+"*.txt"); //avoiding .meta files
+////			int graphIndex = UnityEngine.Random.Range (0,files.Length-1); //get randomly an index for selecting a graph file
+////			selectedFile = files [graphIndex];
+//
+//		}
+
+
+//		Debug.Log ("loading graph");
+//		Debug.Log ("path: "+path);
+
+
+		if (path == "") {
+			TextAsset graphText = Resources.Load ("VRP_04") as TextAsset;
+			fileContent = graphText.text;
 		} else {
-			DirectoryInfo di = new DirectoryInfo ("Assets/Resources");
-			FileInfo[] files = di.GetFiles (graphFileNamePrefx+"*.txt"); //avoiding .meta files
-			int graphIndex = UnityEngine.Random.Range (0,files.Length-1); //get randomly an index for selecting a graph file
-			selectedFile = files [graphIndex];
+			fileContent = System.IO.File.ReadAllText (path);
 		}
 
-		//clean previous node gameobjects spawned
-		if (vrp.NodeGOs != null && vrp.NodeGOs.Count > 0) {
-			foreach (VRPNodeGameObject g in new List<VRPNodeGameObject> (vrp.NodeGOs)) {
-				vrp.NodeGOs.Remove (g);
-				Destroy (g.gameObject);
+//		Debug.Log ("content:\n"+fileContent);
+
+		if (!string.IsNullOrEmpty(fileContent)){//System.IO.File.Exists (path)) {
+			//clean previous node gameobjects spawned
+			if (vrp.NodeGOs != null && vrp.NodeGOs.Count > 0) {
+				foreach (VRPNodeGameObject g in new List<VRPNodeGameObject> (vrp.NodeGOs)) {
+					vrp.NodeGOs.Remove (g);
+					Destroy (g.gameObject);
+				}
 			}
+
+
+			//		selectedFile.OpenText ().ReadToEnd ();
+			//		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
+//			string fileContent = graphText.text; //selectedFile.OpenText ().ReadToEnd (); // ta.text; //the graph file content
+			vrp = processVRPProblemFileContent (fileContent); //create the vrp graph
+			List<VRPNodeGameObject> nodeGOs = spawnNodes (vrp.Graph.Nodes.Where (x => !x.IsDepot).ToList<VRPNode> (), depot.transform.position);
+			vrp.NodeGOs = nodeGOs;
+			OnVRPLoaded (vrp); //dispatch event
+		} else {
+			Debug.LogError ("Not found file: "+path);
 		}
-
-
-//		selectedFile.OpenText ().ReadToEnd ();
-//		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
-		string fileContent = selectedFile.OpenText ().ReadToEnd (); // ta.text; //the graph file content
-		vrp = processVRPProblemFileContent (fileContent); //create the vrp graph
-		List<VRPNodeGameObject> nodeGOs = spawnNodes (vrp.Graph.Nodes.Where( x => !x.IsDepot).ToList<VRPNode>(), depot.transform.position);
-		vrp.NodeGOs = nodeGOs;
-		OnVRPLoaded (vrp); //dispatch event
 	}
 
 	//--------------------------------------
