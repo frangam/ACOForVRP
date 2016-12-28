@@ -102,7 +102,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 
 
 		if (path == "") {
-			TextAsset graphText = Resources.Load ("VRP_04") as TextAsset;
+			TextAsset graphText = Resources.Load ("VRP_00") as TextAsset;
 			fileContent = graphText.text;
 		} else {
 			fileContent = System.IO.File.ReadAllText (path);
@@ -239,8 +239,9 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			x = x > 0 ? x + progress + 0.5f : x - progress - 0.5f;
 			y = y > 0 ? y + progress + 0.5f : y - progress - 0.5f;
 
-			node.updatePolarCoords (x, y);
-			pos = new Vector3(x, y, 0);
+
+			pos = new Vector3(x, y, 0) + centerPos;
+			node.updatePolarCoords (pos.x, pos.y);
 
 			nodeGO = Instantiate (pbNode, pos, Quaternion.identity) as VRPNodeGameObject; //the spawn
 			nodeGO.loadNode(node); //load node info
