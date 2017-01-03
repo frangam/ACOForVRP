@@ -233,8 +233,17 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 				VRPNodeGameObject a = nodeGOs.Find (x => x.Node.Id.Equals (e.NodeA.Id));
 				VRPNodeGameObject b = nodeGOs.Find (x => x.Node.Id.Equals (e.NodeB.Id));
 
+
+				if (a == null && e.NodeA.IsDepot) {
+					a = depot;
+				}
+				if(b == null && e.NodeB.IsDepot){
+					b = depot;
+				}
+					
+
 				if (a != null && b != null) {
-					e.Weight = (int)Vector3.Distance (b.transform.position, a.transform.position);
+					e.Weight = Vector3.Distance (b.transform.position, a.transform.position);
 				}
 			}
 		}
@@ -246,7 +255,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 		List<ACOVRPEdge> edgesWithToDepot = vrp.Graph.Edges.Where (e => e.NodeB.IsDepot).ToList<ACOVRPEdge>();
 		return edgesWithToDepot.Sum (e => e.Weight) / edgesWithToDepot.Count;
 	}
-	private int maxDistanceOfEdgeTomDepot(int order=0){
+	private float maxDistanceOfEdgeTomDepot(int order=0){
 		List<ACOVRPEdge> edgesWithToDepot = vrp.Graph.Edges.Where (e => e.NodeB.IsDepot).ToList<ACOVRPEdge>();
 		edgesWithToDepot.Sort ();
 		edgesWithToDepot.Reverse ();

@@ -59,7 +59,7 @@ public class ACOEdge<N> : WEdge<N> where N:Node {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public ACOEdge(N a, N b, int pWeight, double pPheromone):base(a, b, pWeight){
+	public ACOEdge(N a, N b, float pWeight, double pPheromone):base(a, b, pWeight){
 		previousPheromone = ACOSolver.Instance.InitialPheromone;
 		pheromone = pPheromone;
 	}

@@ -35,7 +35,7 @@ public class ACOVRPEdge : ACOEdge<VRPNode>  {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public ACOVRPEdge(VRPNode a, VRPNode b, int pWeight, double pPheromone):base(a, b, pWeight, pPheromone){
+	public ACOVRPEdge(VRPNode a, VRPNode b, float pWeight, double pPheromone):base(a, b, pWeight, pPheromone){
 		
 	}
 

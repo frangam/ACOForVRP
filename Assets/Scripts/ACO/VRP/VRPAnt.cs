@@ -68,6 +68,9 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 		return !nodeToAdd.IsDepot && base.checkConditionToAddNodeToCompleteTour (allNodes, nodeToAdd);
 	}
 
+
+
+
 	//--------------------------------------
 	// Overriden Methods
 	//--------------------------------------
@@ -85,5 +88,9 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 		return (nodeToAdd.IsDepot && totalDepotsInTour < 2) || base.checkConditionToAddNodeToCompleteTour (allNodes, nodeToAdd);
 	}
 
+	public override bool checkNodeConditionIn2Opt (List<VRPNode> tour, int index)
+	{
+		return base.checkNodeConditionIn2Opt (tour, index) && !tour[index].IsDepot;
+	}
 
 }

@@ -107,6 +107,8 @@ public class UIManager : Singleton<UIManager> {
 		startBtn.gameObject.SetActive (false);
 		restartBtn.gameObject.SetActive (true);
 		pauseBtn.gameObject.SetActive (true);
+
+		settingsButton (true);
 	}
 
 	public void restartButton(){
@@ -120,8 +122,8 @@ public class UIManager : Singleton<UIManager> {
 		pauseBtn.gameObject.SetActive (!pause);
 	}
 
-	public void settingsButton(){
-		settingsPnlOpened = !settingsPnlOpened;
+	public void settingsButton(bool start=false){
+		settingsPnlOpened = !start ? !settingsPnlOpened : false;
 		settingsPnl.SetActive (settingsPnlOpened);
 	}
 

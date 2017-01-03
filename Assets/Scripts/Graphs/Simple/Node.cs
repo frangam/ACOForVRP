@@ -87,7 +87,7 @@ public class Node {
 			visited = value;
 		}
 	}
-
+		
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
@@ -102,6 +102,13 @@ public class Node {
 		x = pX;
 		y = pY;
 		visited = pVisited;
+	}
+
+	//--------------------------------------
+	// Public Methods
+	//--------------------------------------
+	public float distanceFromOtherNode(Node target){
+		return Mathf.Sqrt (Mathf.Pow(target.x-this.x, 2) + Mathf.Pow(target.y-this.y, 2));
 	}
 
 	//--------------------------------------

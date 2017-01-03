@@ -27,12 +27,12 @@ public class WEdge<N> : Edge<N>, System.IComparable  where N:Node{
 	// Setting Attributes
 	//--------------------------------------
 	[SerializeField]
-	private int weight;
+	private float weight;
 
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
-	public int Weight {
+	public float Weight {
 		get {
 			return this.weight;
 		}
@@ -44,7 +44,7 @@ public class WEdge<N> : Edge<N>, System.IComparable  where N:Node{
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public WEdge(N a, N b, int pWeight):base(a, b){
+	public WEdge(N a, N b, float pWeight):base(a, b){
 		weight = pWeight;
 	}
 

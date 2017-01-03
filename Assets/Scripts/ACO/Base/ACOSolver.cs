@@ -249,7 +249,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 				//for each ant
 				int aIndex = 1;
 				foreach(VRPAnt ant in ants) {
-					ant.Paths = new List<ACOVRPEdge> ();
+//					ant.Paths = new List<ACOVRPEdge> ();
+					ant.resetRoute();
 					VRPNode currentNode = depot;
 					currentNode.Visited = true;
 					int quantity = ant.TheObject.Quantity;
@@ -332,11 +333,11 @@ public class ACOSolver : Singleton<ACOSolver>{
 				foreach (ACOVRPEdge e in a.Paths) {
 					tour += e.Id + ".";
 				}
-				Debug.Log (tour);
+				Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 			}
 
 			//2-optimal heuristic
-			ants = improveSolutionWithTwoOPT(ants, depot);
+			improveSolutionWithTwoOPT(ants, depot);
 
 //			//update graph nodes with the best solution
 //			List<VRPNode> bestSol = new List<VRPNode>(){depot};
@@ -358,7 +359,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 				foreach (ACOVRPEdge e in a.Paths) {
 					tour += e.Id + ".";
 				}
-				Debug.Log (tour);
+				Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 			}
 
 
@@ -372,10 +373,10 @@ public class ACOSolver : Singleton<ACOSolver>{
 			foreach (ACOVRPEdge e in a.Paths) {
 				tour += e.Id + ".";
 			}
-			Debug.Log (tour);
+			Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 		}
 
-		StartCoroutine(drawSolution ());
+//		StartCoroutine(drawFinalOptimization ());
 	}
 
 	private IEnumerator initEdges(){
@@ -400,7 +401,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 		StartCoroutine (ACO());
 	}
 
-	private IEnumerator drawSolution(){
+	private IEnumerator drawFinalOptimization(){
 		updatePheromoneGameObjects ();
 
 		yield return new WaitForSeconds (startDelay);
@@ -467,115 +468,147 @@ public class ACOSolver : Singleton<ACOSolver>{
 		}
 	}
 
-	private List<VRPAnt> improveSolutionWithTwoOPT(List<VRPAnt> currentSolution, VRPNode depot){
+	private void improveSolutionWithTwoOPT(List<VRPAnt> currentSolution, VRPNode depot){
+		List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //result
 		Dictionary<VRPNode,float> angles = new Dictionary<VRPNode, float> (); //node angles
 		Dictionary<VRPAnt, Dictionary<int, List<VRPNode>>> nodesInQuadrants = new Dictionary<VRPAnt, Dictionary<int, List<VRPNode>>>();
 		Dictionary<VRPAnt, List<VRPNode>> nodesInClusters = new Dictionary<VRPAnt,List<VRPNode>>();
 		Dictionary<VRPAnt, int> currentQuantities = new Dictionary<VRPAnt, int>();
 
-		//pass to a dictionary ant capacity
-		foreach (VRPAnt a in currentSolution)
-			currentQuantities.Add (a, a.TheObject.Quantity);
+//		//pass to a dictionary ant capacity
+//		foreach (VRPAnt a in currentSolution)
+//			currentQuantities.Add (a, a.TheObject.Quantity);
+//
+//		//initialization
+//		foreach (VRPAnt a in currentSolution) {
+//			//each route of current ant
+//			foreach (VRPNode n in a.CompleteTour) {
+//				if (!n.IsDepot) {
+//					//locate in quadrant
+//					int quadrant = 1;
+//
+//					if(n.XPol2Cart >= 0 && n.YPol2Cart >= 0)
+//						quadrant = 1;
+//					else if (n.XPol2Cart <= 0 && n.YPol2Cart >= 0)
+//						quadrant = 2;
+//					else if (n.XPol2Cart <= 0 && n.YPol2Cart <= 0)
+//						quadrant = 3;
+//					else if (n.XPol2Cart >= 0 && n.YPol2Cart <= 0)
+//						quadrant = 4;
+//
+//					//register node and quadrant in a dictionary
+//					if (!nodesInQuadrants.ContainsKey (a))
+//						nodesInQuadrants.Add (a, new Dictionary<int, List<VRPNode>> (){ { quadrant, new List<VRPNode> (){ n } } });
+//					else if (!nodesInQuadrants [a].ContainsKey (quadrant))
+//						nodesInQuadrants [a].Add(quadrant, new List<VRPNode> (){ n });
+//					else if(!nodesInQuadrants[a][quadrant].Contains(n))
+//						nodesInQuadrants[a][quadrant].Add (n);						
+//
+//					//calculate angles
+//					if (!angles.ContainsKey (n)) {
+//						float angle = Mathf.Asin ((n.YPol2Cart - depot.YPol2Cart) / (Mathf.Sqrt (Mathf.Pow (n.XPol2Cart - depot.XPol2Cart, 2) + Mathf.Pow (n.YPol2Cart - depot.YPol2Cart, 2))));
+//						angles.Add (n, angle);
+//					}
+//				}
+//			}
+//		}
+//
+//		//Phase I: clustering creation
+//		if (TwoOPTForward) {
+//			foreach (VRPAnt a in currentSolution) {
+//				for (int i = 4; i > 0; i--) { //quadrant 4 to 1
+//					if(nodesInQuadrants[a].ContainsKey(i))
+//						createClusters (currentSolution, angles, nodesInQuadrants[a][i], currentQuantities, nodesInClusters, i, a);
+//				}
+//			}
+//		} else {
+//			foreach (VRPAnt a in currentSolution) {
+//				for (int i = 1; i < 5; i++) { //quadrant 1 to 4
+//					if(nodesInQuadrants[a].ContainsKey(i))
+//						createClusters (currentSolution, angles, nodesInQuadrants[a][i], currentQuantities, nodesInClusters, i, a);
+//				}
+//			}
+//		}
+//
+//		//Phase II: route creation
+//		//create Distance Matrix
+//		foreach(VRPAnt a in nodesInClusters.Keys){
+//			Dictionary<VRPNode,float> distMatrix = new Dictionary<VRPNode,float> ();
+//
+//			//create Distance Matrix
+//			foreach (VRPNode n in nodesInClusters[a]) {
+//				distMatrix.Add (n, Mathf.Sqrt(Mathf.Pow(n.XPol2Cart-depot.XPol2Cart,2)+Mathf.Pow(n.YPol2Cart-depot.YPol2Cart,2)));
+////				distMatrix.Add (n, vrp.Graph.Edges.Find(e=>e.NodeA.Id.Equals(n.Id) && e.NodeB.Id.Equals(depot.Id)).Weight);
+//			}
+//
+//			//local search with min distance
+//			List<VRPNode> shortestPath = new List<VRPNode>();
+//			foreach (KeyValuePair<VRPNode,float> pair in distMatrix.OrderBy(p=>p.Value).ToList())
+//				shortestPath.Add (pair.Key);
+//			
+//			List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //routes for ant asociated to the cluster
+//
+//			VRPNode nFrom = depot, nTo = shortestPath [0];
+//			KeyValuePair<int, double> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
+//			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
+//
+//			for(int i=0; i<shortestPath.Count-1; i++){
+//				nFrom = shortestPath [i];
+//				nTo = shortestPath[i+1];
+//				edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
+//				improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
+//			}
+//				
+//			nFrom = shortestPath[shortestPath.Count-1];
+//			nTo = depot;
+//			edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
+//			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
+//
+//			//update routes of the ant of this cluster
+//			currentSolution.Find(c=>c.TheObject.Id.Equals(a.TheObject.Id)).Paths = new List<ACOVRPEdge>(improvedRoutes);
+//		}
 
-		//initialization
 		foreach (VRPAnt a in currentSolution) {
-			//each route of current ant
-			foreach (VRPNode n in a.CompleteTour) {
-				if (!n.IsDepot) {
-					//locate in quadrant
-					int quadrant = 1;
-
-					if(n.XPol2Cart >= 0 && n.YPol2Cart >= 0)
-						quadrant = 1;
-					else if (n.XPol2Cart <= 0 && n.YPol2Cart >= 0)
-						quadrant = 2;
-					else if (n.XPol2Cart <= 0 && n.YPol2Cart <= 0)
-						quadrant = 3;
-					else if (n.XPol2Cart >= 0 && n.YPol2Cart <= 0)
-						quadrant = 4;
-
-					//register node and quadrant in a dictionary
-					if (!nodesInQuadrants.ContainsKey (a))
-						nodesInQuadrants.Add (a, new Dictionary<int, List<VRPNode>> (){ { quadrant, new List<VRPNode> (){ n } } });
-					else if (!nodesInQuadrants [a].ContainsKey (quadrant))
-						nodesInQuadrants [a].Add(quadrant, new List<VRPNode> (){ n });
-					else if(!nodesInQuadrants[a][quadrant].Contains(n))
-						nodesInQuadrants[a][quadrant].Add (n);						
-
-					//calculate angles
-					if (!angles.ContainsKey (n)) {
-						float angle = Mathf.Asin ((n.YPol2Cart - depot.YPol2Cart) / (Mathf.Sqrt (Mathf.Pow (n.XPol2Cart - depot.XPol2Cart, 2) + Mathf.Pow (n.YPol2Cart - depot.YPol2Cart, 2))));
-						angles.Add (n, angle);
-					}
-				}
+			//-------------
+			//TODO for testing
+			string tour = "";
+			foreach (ACOVRPEdge e in a.Paths) {
+				tour += e.Id + ".";
 			}
-		}
+			Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+			//-------------
 
-		//Phase I: clustering creation
-		if (TwoOPTForward) {
-			foreach (VRPAnt a in currentSolution) {
-				for (int i = 4; i > 0; i--) { //quadrant 4 to 1
-					if(nodesInQuadrants[a].ContainsKey(i))
-						createClusters (currentSolution, angles, nodesInQuadrants[a][i], currentQuantities, nodesInClusters, i, a);
-				}
-			}
-		} else {
-			foreach (VRPAnt a in currentSolution) {
-				for (int i = 1; i < 5; i++) { //quadrant 1 to 4
-					if(nodesInQuadrants[a].ContainsKey(i))
-						createClusters (currentSolution, angles, nodesInQuadrants[a][i], currentQuantities, nodesInClusters, i, a);
-				}
-			}
-		}
+			List<VRPNode> completeTour = a.improveCurrentRouteWithTwoOPT (vrp.Graph);
+			improvedRoutes = new List<ACOVRPEdge> ();
 
-		//Phase II: route creation
-		//create Distance Matrix
-		foreach(VRPAnt a in nodesInClusters.Keys){
-			Dictionary<VRPNode,float> distMatrix = new Dictionary<VRPNode,float> ();
-
-			//create Distance Matrix
-			foreach (VRPNode n in nodesInClusters[a]) {
-				distMatrix.Add (n, Mathf.Sqrt(Mathf.Pow(n.XPol2Cart-depot.XPol2Cart,2)+Mathf.Pow(n.YPol2Cart-depot.YPol2Cart,2)));
-//				distMatrix.Add (n, vrp.Graph.Edges.Find(e=>e.NodeA.Id.Equals(n.Id) && e.NodeB.Id.Equals(depot.Id)).Weight);
-			}
-
-			//local search with min distance
-			List<VRPNode> shortestPath = new List<VRPNode>();
-			foreach (KeyValuePair<VRPNode,float> pair in distMatrix.OrderBy(p=>p.Value).ToList())
-				shortestPath.Add (pair.Key);
-			
-			List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //routes for ant asociated to the cluster
-
-			VRPNode nFrom = depot, nTo = shortestPath [0];
-			KeyValuePair<int, double> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
-			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
-
-			for(int i=0; i<shortestPath.Count-1; i++){
-				nFrom = shortestPath [i];
-				nTo = shortestPath[i+1];
-				edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
+			for(int i=0; i<completeTour.Count-1; i++){
+				VRPNode nFrom = completeTour [i];
+				VRPNode nTo = completeTour[i+1];
+				KeyValuePair<float, double> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
 				improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
 			}
-				
-			nFrom = shortestPath[shortestPath.Count-1];
-			nTo = depot;
-			edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
-			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
 
-			//update routes of the ant of this cluster
-			currentSolution.Find(c=>c.TheObject.Id.Equals(a.TheObject.Id)).Paths = new List<ACOVRPEdge>(improvedRoutes);
+			a.Paths = new List<ACOVRPEdge> (improvedRoutes);
+
+
+			//-------------
+			//TODO for testing
+			tour = "";
+			foreach (ACOVRPEdge e in a.Paths) {
+				tour += e.Id + ".";
+			}
+			Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+			//-------------
 		}
-
-		return currentSolution;
 	}
 
-	private KeyValuePair<int, double> getWeightAndPheromoneOfEdge(VRPNode a, VRPNode b){
-		KeyValuePair<int, double> res = new KeyValuePair<int, double>();
+	private KeyValuePair<float, double> getWeightAndPheromoneOfEdge(VRPNode a, VRPNode b){
+		KeyValuePair<float, double> res = new KeyValuePair<float, double>();
 
 		ACOVRPEdge edge = vrp.Graph.Edges.Find (e => e.NodeA.Id.Equals (a.Id) && e.NodeB.Id.Equals (b.Id));
 
 		if (edge != null)
-			res = new KeyValuePair<int, double> (edge.Weight, edge.Pheromone);
+			res = new KeyValuePair<float, double> (edge.Weight, edge.Pheromone);
 
 		return res;
 	}
@@ -718,7 +751,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 		return total;
 	}
 
-	private double calculateFirstOperandProbToVisitNextNode(double edgePheromone, int edgeCost){
+	private double calculateFirstOperandProbToVisitNextNode(double edgePheromone, float edgeCost){
 		double visibility = edgeCost != 0 ? 1.0 / (edgeCost*1.0) : 1.0;
 
 		return improvedACO ? System.Math.Pow (edgePheromone, pheromoneInfluence) * System.Math.Pow (visibility, visibilityInfluence) 
@@ -757,7 +790,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 					newPhe += impInc;
 				}
 				else {
-					edgeIJ.Pheromone = ((1.0 - ro) * edgeIJ.Pheromone) + ro / ant.RouteDistanceCost;
+					edgeIJ.Pheromone = ((1.0 - ro) * edgeIJ.Pheromone) + ro / ant.TotalRouteWeight;
 				}
 			}
 
@@ -768,7 +801,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 	public double globalUpdateResult(ACOVRPEdge edge, VRPAnt ant){
 		double oldPheromone = edge.Pheromone;
-		double newPhe = !improvedACO ? ((1.0 - ro) * oldPheromone) + ro / ant.RouteDistanceCost
+		double newPhe = !improvedACO ? ((1.0 - ro) * oldPheromone) + ro / ant.TotalRouteWeight
 //			: ((1.0f - ro) * oldPheromone) * (currentIteration - 1) + pheromoneIncrement (ant);
 			: (ro * oldPheromone) + pheromoneImprovedIncrement(edge, ant);
 		return newPhe;
@@ -777,14 +810,14 @@ public class ACOSolver : Singleton<ACOSolver>{
 	public double pheromoneImprovedIncrement(ACOVRPEdge edgeIJ, VRPAnt ant){
 		double inc = 0.0;
 		float Q = impIACO_Q;//ants[0].TheObject.Quantity;
-		int L = ants.Sum(a=>a.TotalRouteWeight);
+		float L = ants.Sum(a=>a.TotalRouteWeight);
 		int K = Mathf.Clamp(ants.Count, 1, int.MaxValue);
-		int dij = edgeIJ.Weight;
+		float dij = edgeIJ.Weight;
 		bool routeIJInAntPaths = ant.Paths.Find (edgeK => edgeK.NodeA.Id.Equals (edgeIJ.NodeA.Id) && edgeK.NodeB.Id.Equals (edgeIJ.NodeB.Id)) != null;
 
 		if (routeIJInAntPaths) {
 			int mk = Mathf.Clamp (ant.CompleteTourWithOutDepot.Count, 1, int.MaxValue); //m>0
-			int Dk = Mathf.Clamp (ant.TotalRouteWeight, 1, int.MaxValue);
+			float Dk = Mathf.Clamp (ant.TotalRouteWeight, 1, int.MaxValue);
 			inc = (Q *1.0 / (L * K)) * ((Dk - dij)*1.0 / (mk * Dk));
 		}
 

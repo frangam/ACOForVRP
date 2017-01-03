@@ -34,7 +34,6 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	// Private Attributes
 	//--------------------------------------
 	private List<E> paths;
-	private int routeDistanceCost;
 	private int routeProcessingTimeCost;
 
 	//--------------------------------------
@@ -62,7 +61,7 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 		}
 	}
 
-	public int TotalRouteWeight{
+	public float TotalRouteWeight{
 		get{
 			return Mathf.Clamp(paths.Sum (r => r.Weight), 1, int.MaxValue);
 		}
@@ -89,17 +88,6 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 		}
 	}
 
-
-
-	public int RouteDistanceCost {
-		get {
-			return this.routeDistanceCost;
-		}
-		set {
-			routeDistanceCost = value;
-		}
-	}
-
 	public int RouteProcessingTimeCost {
 		get {
 			return this.routeProcessingTimeCost;
@@ -114,7 +102,6 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	public Ant(T pTheObject){
 		theObject = pTheObject;
-		routeDistanceCost = 0;
 		routeProcessingTimeCost = 0;
 		paths = new List<E>();
 	}
@@ -122,20 +109,73 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	// Public Methods
 	//--------------------------------------
-
+	public void resetRoute(){
+		paths = new List<E> ();
+	}
 
 	//--------------------------------------
 	// Virtual Methods
 	//--------------------------------------
 	public virtual E createRoute(Graph<N, E> graph, N from, N to){
 		E edge = graph.Edges.Find (e => e.NodeA.Id.Equals(from.Id) && e.NodeB.Id.Equals(to.Id));
-		routeDistanceCost += edge.Weight;
 		paths.Add(edge);
 		return edge;
 	}
 
 	protected virtual bool checkConditionToAddNodeToCompleteTour(List<N> allNodes, N nodeToAdd){
 		return !allNodes.Contains (nodeToAdd);
+	}
+
+	/// <summary>
+	/// Gets the 2-OPT path.
+	/// </summary>
+	/// <returns>The two OPT paht.</returns>
+	public virtual List<N> improveCurrentRouteWithTwoOPT(Graph<N, E> graph){
+		List<N> curTour = new List<N>(CompleteTour);
+		float minDist = TotalRouteWeight; //current distance cost
+		float curCost = 0;
+
+		for (int i = 0; i < curTour.Count; i++) {
+			if (checkNodeConditionIn2Opt(curTour, i)) {
+				for (int j = i + 1; j < curTour.Count; j++) {
+					if(checkNodeConditionIn2Opt(curTour, j)){
+						exchangeTwoNodes (curTour, curTour [i], curTour [j]); //do the exchange 2-opt
+						curCost = totalWeightOfThisTour (graph, curTour);
+
+						if (curCost < minDist) {
+							minDist = curCost;
+						} else { //restore
+							exchangeTwoNodes (curTour, curTour [i], curTour [j]);
+						}
+					}
+				}
+			}
+		}
+
+		return curTour;
+	}
+
+	public virtual bool checkNodeConditionIn2Opt(List<N> tour, int index){
+		return tour[index] != null;
+	}
+
+	public virtual float totalWeightOfThisTour(Graph<N, E> graph, List<N> tour){
+		float res = 0f;
+
+		for (int i = 0; i < tour.Count-1; i++) {
+			N a = tour [i];
+			N b = tour [i + 1];
+			float w = graph.Edges.Find (e=>e.NodeA.Id.Equals(a.Id) && e.NodeB.Id.Equals(b.Id)).Weight;
+			res += w;
+		}
+
+		return res;
+	}
+
+	public virtual void exchangeTwoNodes(List<N> tour, N a, N b){
+		N aux = (N) System.Activator.CreateInstance (typeof(N), a);
+		tour[tour.IndexOf (a)] = (N) System.Activator.CreateInstance (typeof(N), b);
+		tour[tour.IndexOf (b)] = (N) System.Activator.CreateInstance (typeof(N), aux);
 	}
 
 
