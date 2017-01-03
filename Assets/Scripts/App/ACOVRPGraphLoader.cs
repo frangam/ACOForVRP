@@ -83,23 +83,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 	// Public Methods
 	//--------------------------------------
 	public void load(string path=""){
-//		FileInfo selectedFile = null;
 		string fileContent = "";
-
-//		if (path != "") {
-////			selectedFile = new FileInfo (path);
-//		} else {
-////			DirectoryInfo di = new DirectoryInfo (Application.isEditor ? "Assets/Resources" : Application.persistentDataPath+ "/Assets/Resources");
-////			FileInfo[] files = di.GetFiles (graphFileNamePrefx+"*.txt"); //avoiding .meta files
-////			int graphIndex = UnityEngine.Random.Range (0,files.Length-1); //get randomly an index for selecting a graph file
-////			selectedFile = files [graphIndex];
-//
-//		}
-
-
-//		Debug.Log ("loading graph");
-//		Debug.Log ("path: "+path);
-
 
 		if (path == "") {
 			TextAsset graphText = Resources.Load ("VRP_00") as TextAsset;
@@ -119,10 +103,6 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 				}
 			}
 
-
-			//		selectedFile.OpenText ().ReadToEnd ();
-			//		TextAsset ta = Resources.Load (selectedFile.Name.Split(new string[] {selectedFile.Extension}, System.StringSplitOptions.None)[0]) as TextAsset;
-//			string fileContent = graphText.text; //selectedFile.OpenText ().ReadToEnd (); // ta.text; //the graph file content
 			vrp = processVRPProblemFileContent (fileContent); //create the vrp graph
 			List<VRPNodeGameObject> nodeGOs = spawnNodes (vrp.Graph.Nodes.Where (x => !x.IsDepot).ToList<VRPNode> (), depot.transform.position);
 			vrp.NodeGOs = nodeGOs;
@@ -239,7 +219,6 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			x = x > 0 ? x + progress + 0.5f : x - progress - 0.5f;
 			y = y > 0 ? y + progress + 0.5f : y - progress - 0.5f;
 
-
 			pos = new Vector3(x, y, 0) + centerPos;
 			node.updatePolarCoords (pos.x, pos.y);
 
@@ -248,7 +227,7 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			nodeGOs.Add(nodeGO);
 		}
 
-		//fix distance
+		//fix distance with 3d world coordinates
 		if (fixEdgeWeightWithRealDist) {
 			foreach (ACOVRPEdge e in vrp.Graph.Edges) {
 				VRPNodeGameObject a = nodeGOs.Find (x => x.Node.Id.Equals (e.NodeA.Id));

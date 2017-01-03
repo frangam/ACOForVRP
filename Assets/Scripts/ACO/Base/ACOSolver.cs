@@ -182,6 +182,15 @@ public class ACOSolver : Singleton<ACOSolver>{
 			curAntGO = value;
 		}
 	}
+
+	public bool VisualInitPheromone {
+		get {
+			return this.visualInitPheromone;
+		}
+		set {
+			visualInitPheromone = value;
+		}
+	}
 		
 	//--------------------------------------
 	// Unity Methods
@@ -276,7 +285,6 @@ public class ACOSolver : Singleton<ACOSolver>{
 							UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
 
 							//comming back to the depot
-//							ant.createRoute (vrp.Graph, currentNode, depot);
 							ACOVRPEdge edgeThrough = aGO.createRoute (vrp.Graph, currentNode, depot);
 							currentNode.Visited = true;
 
@@ -286,7 +294,6 @@ public class ACOSolver : Singleton<ACOSolver>{
 								yield return null;
 						}
 						else {
-//							ant.createRoute (vrp.Graph, currentNode, nextBestNode);
 							ACOVRPEdge edgeThrough = aGO.createRoute (vrp.Graph, currentNode, nextBestNode);
 							quantity -= nextBestNode.Demand;
 							currentNode = nextBestNode;
@@ -300,7 +307,6 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 							if (quantity == 0 || allNodesVisited(vrp.Graph.Nodes)) {
 								//comming back to the depot
-//								ant.createRoute (vrp.Graph, currentNode, depot);
 								edgeThrough = aGO.createRoute (vrp.Graph, currentNode, depot);
 								currentNode.Visited = true;
 
@@ -313,11 +319,6 @@ public class ACOSolver : Singleton<ACOSolver>{
 					}
 
 					yield return new WaitForSeconds (0.25f);
-
-//					//get the best ant with the minimum route distance cost
-//					if(ant != bestAnt && ant.RouteDistanceCost < bestAnt.RouteDistanceCost){
-//						bestAnt = ant;
-//					}
 				}//_end_for_each_ant
 			}//_end_while_customers
 

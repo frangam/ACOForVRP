@@ -137,7 +137,7 @@ public class SettingSlider : MonoBehaviour {
 		case SettingType.ITERATION:
 			slider.wholeNumbers = true;
 			slider.minValue = 1;
-			slider.maxValue = 1000000;
+			slider.maxValue = 1000;
 			Value = ACOSolver.Instance.Iterations;
 			break;
 		}

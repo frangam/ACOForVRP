@@ -51,6 +51,9 @@ public class UIManager : Singleton<UIManager> {
 	[SerializeField]
 	private SettingSlider[] sliders;
 
+	[SerializeField]
+	private Toggle tgInitPheromone;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -82,6 +85,7 @@ public class UIManager : Singleton<UIManager> {
 
 	public void Start(){
 		initialAntSpeed = ACOSolver.Instance.AntSpeed;
+		tgInitPheromone.isOn = ACOSolver.Instance.VisualInitPheromone;
 	}
 
 	//--------------------------------------
@@ -124,6 +128,10 @@ public class UIManager : Singleton<UIManager> {
 	public void restoreSettings(){
 		foreach (SettingSlider s in sliders)
 			s.restoreValue ();
+	}
+
+	public void showInitialPheromone(){
+		ACOSolver.Instance.VisualInitPheromone = tgInitPheromone.isOn;
 	}
 
 
