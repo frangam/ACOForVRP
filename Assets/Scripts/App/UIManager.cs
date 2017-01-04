@@ -154,8 +154,8 @@ public class UIManager : Singleton<UIManager> {
 		System.TimeSpan ts = ACOSolver.Instance.StopWatch.Elapsed;
 
 		if (lbExecutionTime) {
-			lbExecutionTime.text = System.String.Format ("{0}: {1:00}:{2:00}:{3:00}.{4:0000}", "Time",
-				ts.Hours, ts.Minutes, ts.Seconds, 
+			lbExecutionTime.text = System.String.Format ("{0}: {1:00}:{2:00}.{3:0000}", "Time",
+				ts.Minutes, ts.Seconds, 
 				ts.Milliseconds);
 		}
 	}
