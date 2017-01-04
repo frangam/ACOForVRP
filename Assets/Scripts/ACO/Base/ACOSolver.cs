@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 using System.Linq;
+using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -33,6 +34,10 @@ public class ACOSolver : Singleton<ACOSolver>{
 	[SerializeField]
 	[Tooltip("Pheromone Prefab")]
 	private VRPPheromoneGO pbPheromone;
+
+	[SerializeField]
+	[Tooltip("If you want to see how ants are spawned and visualize the ACO processs, check this")]
+	private bool showVisualProcess = true;
 
 	[SerializeField]
 	private float antSpeed = 2;
@@ -82,6 +87,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private float antsSolMovSpeed = 5;
 
 	[SerializeField]
+	private float waitTimeAmongAnts = 0.25f;
+
+	[SerializeField]
 	private Color[] antColors;
 
 	//--------------------------------------
@@ -93,6 +101,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private int currentIteration = 0;
 	private bool vrpLoaded = false;
 	private VRPAntGameObject curAntGO;
+	private Stopwatch stopWatch = new Stopwatch();
 
 	/// <summary>
 	/// The Ant GameObjects
@@ -191,6 +200,20 @@ public class ACOSolver : Singleton<ACOSolver>{
 			visualInitPheromone = value;
 		}
 	}
+	public bool ShowVisualProcess {
+		get {
+			return this.showVisualProcess;
+		}
+		set {
+			showVisualProcess = value;
+		}
+	}
+
+	public Stopwatch StopWatch {
+		get {
+			return this.stopWatch;
+		}
+	}
 		
 	//--------------------------------------
 	// Unity Methods
@@ -227,6 +250,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		yield return new WaitForSeconds (startDelay*2);
 
+		stopWatch.Start (); //start measuring
+
 		for (int i = 0; i < iterations; i++) {
 			currentIteration = i;
 			UIManager.Instance.updateIteration (currentIteration);
@@ -236,7 +261,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 
 			//delete pheromone trails GameObjects of previous iteration
-			if (i > 0) {
+			if (showVisualProcess && i > 0) {
 				updatePheromoneGameObjects ();
 			}
 
@@ -247,35 +272,18 @@ public class ACOSolver : Singleton<ACOSolver>{
 			while(!allNodesVisited(vrp.Graph.Nodes)){
 
 				//for each ant
-				int aIndex = 1;
-				foreach(VRPAnt ant in ants) {
-//					ant.Paths = new List<ACOVRPEdge> ();
+				for(int antIndex=0; antIndex<ants.Count; antIndex++) {
+					VRPAnt ant = ants[antIndex];
 					ant.resetRoute();
 					VRPNode currentNode = depot;
 					currentNode.Visited = true;
 					int quantity = ant.TheObject.Quantity;
 					UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
+					VRPAntGameObject aGO = null;
 
 					//spawn ant GameObject
-					VRPAntGameObject aGO = antGOs.Find(a=>a.Ant.TheObject.Id.Equals(ant.TheObject.Id));
-					if (i == 0 || (i > 0 && aGO != null && aGO.DestroyWhenDepotReached)) {
-						if(i>0)
-							antGOs = new List<VRPAntGameObject>();
-
-						aGO = spawnAnts (ant, depot);
-
-						if (!antGOs.Contains (aGO))
-							antGOs.Add (aGO);
-					}
-					else if(i > 0 && aGO != null && !aGO.DestroyWhenDepotReached){
-						aGO.gameObject.SetActive (true);
-					}
-					curAntGO = aGO;
-
-					if (antColors.Length > aIndex) {
-						aGO.PheromoneColor = antColors [aIndex];
-						aIndex++;
-					}
+					if(showVisualProcess)
+						aGO = spawnAntProcess(i, antIndex, ant, depot);
 						
 
 					while(quantity > 0 && !allNodesVisited(vrp.Graph.Nodes)){
@@ -286,85 +294,104 @@ public class ACOSolver : Singleton<ACOSolver>{
 							UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
 
 							//comming back to the depot
-							ACOVRPEdge edgeThrough = aGO.createRoute (vrp.Graph, currentNode, depot);
+							ACOVRPEdge edgeThrough = showVisualProcess ? aGO.createRoute (vrp.Graph, currentNode, depot) : ant.createRoute(vrp.Graph, currentNode, depot);
 							currentNode.Visited = true;
 
-							//tell to ant go to the depot
-							aGO.comeBackToDepot(edgeThrough);
-							while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
-								yield return null;
-						}
-						else {
-							ACOVRPEdge edgeThrough = aGO.createRoute (vrp.Graph, currentNode, nextBestNode);
-							quantity -= nextBestNode.Demand;
-							currentNode = nextBestNode;
-							currentNode.Visited = true;
-
-							//tell to ant go to the next node
-							aGO.goToNextNode (edgeThrough, vrp.NodeGOs.Find (n => n.Node.Id.Equals (nextBestNode.Id)).transform);
-							while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
-								yield return null;
-							UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
-
-							if (quantity == 0 || allNodesVisited(vrp.Graph.Nodes)) {
-								//comming back to the depot
-								edgeThrough = aGO.createRoute (vrp.Graph, currentNode, depot);
-								currentNode.Visited = true;
-
-								//tell to ant go to the depot
-								aGO.comeBackToDepot(edgeThrough);
+							//tell to ant gameobject go to the depot
+							if (showVisualProcess) {
+								aGO.comeBackToDepot (edgeThrough);
 								while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
 									yield return null;
 							}
 						}
+						else {
+							ACOVRPEdge edgeThrough = showVisualProcess ? aGO.createRoute (vrp.Graph, currentNode, nextBestNode) : ant.createRoute(vrp.Graph, currentNode, nextBestNode);
+							quantity -= nextBestNode.Demand;
+							currentNode = nextBestNode;
+							currentNode.Visited = true;
+
+							//tell to ant gameobject go to the next node
+							if (showVisualProcess) {
+								aGO.goToNextNode (edgeThrough, vrp.NodeGOs.Find (n => n.Node.Id.Equals (nextBestNode.Id)).transform);
+								while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
+									yield return null;
+								UIManager.Instance.updateAntQuantity (quantity, ant.TheObject.InitialQuantity);
+							}
+
+							if (quantity == 0 || allNodesVisited(vrp.Graph.Nodes)) {
+								//comming back to the depot
+								edgeThrough = showVisualProcess ? aGO.createRoute (vrp.Graph, currentNode, depot) : ant.createRoute(vrp.Graph, currentNode, depot);
+								currentNode.Visited = true;
+
+								//tell to ant gameobject go to the depot
+								if (showVisualProcess) {
+									aGO.comeBackToDepot (edgeThrough);
+									while (aGO.isActiveAndEnabled && !aGO.DestinationReached)
+										yield return null;
+								}
+							}
+						}
 					}
 
-					yield return new WaitForSeconds (0.25f);
+					if (showVisualProcess)
+						yield return new WaitForSeconds (waitTimeAmongAnts);
+					else
+						yield return null;
 				}//_end_for_each_ant
 			}//_end_while_customers
 
-			//--------------------------------------
-			//UPDATING PHASE
-			//--------------------------------------
-
+		
 			//previous results
 			foreach (VRPAnt a in ants) {
 				string tour = "Prev: A"+a.TheObject.Id+">>";
 				foreach (ACOVRPEdge e in a.Paths) {
 					tour += e.Id + ".";
 				}
-				Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 			}
 
-			//2-optimal heuristic
-			improveSolutionWithTwoOPT(ants, depot);
+			//we draw the final solution before improve it
+			if (i == iterations - 1) {
+				stopWatch.Stop ();
 
-//			//update graph nodes with the best solution
-//			List<VRPNode> bestSol = new List<VRPNode>(){depot};
-//			foreach (VRPAnt a in ants) {
-//				foreach (VRPNode n in a.CompleteTourWithOutDepot) {
-//					bestSol.Add (n);
-//					vrp.Graph.Nodes.Remove (n);
-//				}
-//			}
-//			//sort nodes based on best solution
-//			List<VRPNode> currentNodesInGraph = vrp.Graph.Nodes;
-//			vrp.Graph.Nodes.RemoveAll (n => true);
-//			vrp.Graph.Nodes.AddRange (bestSol);
-//			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
-//
-			//optimal results
-			foreach (VRPAnt a in ants) {
-				string tour = "Impv: A"+a.TheObject.Id+">>";
-				foreach (ACOVRPEdge e in a.Paths) {
-					tour += e.Id + ".";
+				if(!showVisualProcess)
+					StartCoroutine (drawFinalOptimization ());
+			}
+
+			//--------------------------------------
+			//UPDATING PHASE
+			//--------------------------------------
+//			if (i < iterations - 1) {
+				//2-optimal heuristic
+				improveSolutionWithTwoOPT (ants, depot);
+
+				//			//update graph nodes with the best solution
+				//			List<VRPNode> bestSol = new List<VRPNode>(){depot};
+				//			foreach (VRPAnt a in ants) {
+				//				foreach (VRPNode n in a.CompleteTourWithOutDepot) {
+				//					bestSol.Add (n);
+				//					vrp.Graph.Nodes.Remove (n);
+				//				}
+				//			}
+				//			//sort nodes based on best solution
+				//			List<VRPNode> currentNodesInGraph = vrp.Graph.Nodes;
+				//			vrp.Graph.Nodes.RemoveAll (n => true);
+				//			vrp.Graph.Nodes.AddRange (bestSol);
+				//			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
+				//
+				//optimal results
+				foreach (VRPAnt a in ants) {
+					string tour = "Impv: A" + a.TheObject.Id + ">>";
+					foreach (ACOVRPEdge e in a.Paths) {
+						tour += e.Id + ".";
+					}
+					UnityEngine.Debug.Log (tour + ". Cost: " + a.TotalRouteWeight.ToString ());
 				}
-				Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
-			}
 
 
-			//pheromone global update
-			pheromoneGlobalUpdate ();
+				//pheromone global update
+				pheromoneGlobalUpdate ();
+//			}
 		}
 
 		//results
@@ -373,10 +400,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 			foreach (ACOVRPEdge e in a.Paths) {
 				tour += e.Id + ".";
 			}
-			Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+			UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 		}
-
-//		StartCoroutine(drawFinalOptimization ());
 	}
 
 	private IEnumerator initEdges(){
@@ -406,12 +431,18 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		yield return new WaitForSeconds (startDelay);
 
+		int antIndex = 1; //color at index 0 is for initialization pheromone
 		foreach (VRPAnt ant in ants) {
 			VRPAntGameObject aGO = antGOs.Find(a=>a.Ant.TheObject.Id.Equals(ant.TheObject.Id));
 			if (aGO == null) {
 				aGO = spawnAnts (ant, vrp.Depot.Node);
 			} else {
 				aGO.gameObject.SetActive (true);
+			}
+
+			if (antColors.Length > antIndex) {
+				aGO.PheromoneColor = antColors [antIndex];
+				antIndex++;
 			}
 
 			foreach (ACOVRPEdge e in ant.Paths) {
@@ -575,7 +606,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			foreach (ACOVRPEdge e in a.Paths) {
 				tour += e.Id + ".";
 			}
-			Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+			UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 			//-------------
 
 			List<VRPNode> completeTour = a.improveCurrentRouteWithTwoOPT (vrp.Graph);
@@ -597,7 +628,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			foreach (ACOVRPEdge e in a.Paths) {
 				tour += e.Id + ".";
 			}
-			Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+			UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 			//-------------
 		}
 	}
@@ -613,81 +644,81 @@ public class ACOSolver : Singleton<ACOSolver>{
 		return res;
 	}
 
-	private void createClusters(List<VRPAnt> currentSolution,Dictionary<VRPNode,float> angles,List<VRPNode> nodesOfQuadrant
-		,Dictionary<VRPAnt, int> currentQuantities, Dictionary<VRPAnt, List<VRPNode>> nodesInClusters, int quadrant, VRPAnt curAnt){ 
-		List<VRPNode> selectedNodes = new List<VRPNode> ();
+//	private void createClusters(List<VRPAnt> currentSolution,Dictionary<VRPNode,float> angles,List<VRPNode> nodesOfQuadrant
+//		,Dictionary<VRPAnt, int> currentQuantities, Dictionary<VRPAnt, List<VRPNode>> nodesInClusters, int quadrant, VRPAnt curAnt){ 
+//		List<VRPNode> selectedNodes = new List<VRPNode> ();
+//
+//		//select node for linking it
+//		VRPNode nodeSelected = getSmallestOrGreaterNodeBasedOnItsAngle (angles, nodesOfQuadrant, selectedNodes);
+//
+//		if (nodeSelected != null) {
+//			nodesOfQuadrant.Remove (nodeSelected);
+//
+//			//get the ant has that node in its complete tour
+////			VRPAnt ant = currentSolution.Find (x => x.CompleteTour.Find (n => n.Id.Equals (nodeSelected.Id)) != null);
+//			int quantity = currentQuantities [curAnt]; //get ant quantity
+//
+//			if (nodeSelected.Demand <= quantity) {
+//				selectedNodes.Add (nodeSelected);
+//				quantity -= nodeSelected.Demand;
+//				currentQuantities [curAnt] = quantity; //update quantity counter
+//
+//				//while exists a node to link in this current quadrant
+//				while (nodeSelected != null) {
+//					nodeSelected = getSmallestOrGreaterNodeBasedOnItsAngle (angles, nodesOfQuadrant, selectedNodes);
+//
+//					if (nodeSelected != null) {
+//						nodesOfQuadrant.Remove (nodeSelected);
+//
+//						//get the ant has that node in its complete tour
+////						ant = currentSolution.Find (x => x.CompleteTour.Find (n => n.Id.Equals (nodeSelected.Id)) != null);
+//						quantity = currentQuantities [curAnt]; //get ant quantity
+//
+//						//cluster change when capacity constraint is not met
+//						if (nodeSelected.Demand > quantity) {
+//							if (nodesInClusters.ContainsKey (curAnt))
+//								nodesInClusters [curAnt].AddRange (selectedNodes);
+//							else
+//								nodesInClusters.Add (curAnt, selectedNodes);
+////							cluster++; 
+//						} else {
+//							selectedNodes.Add (nodeSelected);
+//							quantity -= nodeSelected.Demand;
+//							currentQuantities [curAnt] = quantity; //update quantity counter
+//						}
+//					} else {
+//						if (nodesInClusters.ContainsKey (curAnt))
+//							nodesInClusters [curAnt].AddRange (selectedNodes);
+//						else
+//							nodesInClusters.Add (curAnt, selectedNodes);
+//					}
+//				}
+//			} 
+//			//cluster change when capacity constraint is not met
+//			else {
+////				if(cluster > 0)
+////					cluster++; 
+//			}
+//		}
+//	}
 
-		//select node for linking it
-		VRPNode nodeSelected = getSmallestOrGreaterNodeBasedOnItsAngle (angles, nodesOfQuadrant, selectedNodes);
-
-		if (nodeSelected != null) {
-			nodesOfQuadrant.Remove (nodeSelected);
-
-			//get the ant has that node in its complete tour
-//			VRPAnt ant = currentSolution.Find (x => x.CompleteTour.Find (n => n.Id.Equals (nodeSelected.Id)) != null);
-			int quantity = currentQuantities [curAnt]; //get ant quantity
-
-			if (nodeSelected.Demand <= quantity) {
-				selectedNodes.Add (nodeSelected);
-				quantity -= nodeSelected.Demand;
-				currentQuantities [curAnt] = quantity; //update quantity counter
-
-				//while exists a node to link in this current quadrant
-				while (nodeSelected != null) {
-					nodeSelected = getSmallestOrGreaterNodeBasedOnItsAngle (angles, nodesOfQuadrant, selectedNodes);
-
-					if (nodeSelected != null) {
-						nodesOfQuadrant.Remove (nodeSelected);
-
-						//get the ant has that node in its complete tour
-//						ant = currentSolution.Find (x => x.CompleteTour.Find (n => n.Id.Equals (nodeSelected.Id)) != null);
-						quantity = currentQuantities [curAnt]; //get ant quantity
-
-						//cluster change when capacity constraint is not met
-						if (nodeSelected.Demand > quantity) {
-							if (nodesInClusters.ContainsKey (curAnt))
-								nodesInClusters [curAnt].AddRange (selectedNodes);
-							else
-								nodesInClusters.Add (curAnt, selectedNodes);
-//							cluster++; 
-						} else {
-							selectedNodes.Add (nodeSelected);
-							quantity -= nodeSelected.Demand;
-							currentQuantities [curAnt] = quantity; //update quantity counter
-						}
-					} else {
-						if (nodesInClusters.ContainsKey (curAnt))
-							nodesInClusters [curAnt].AddRange (selectedNodes);
-						else
-							nodesInClusters.Add (curAnt, selectedNodes);
-					}
-				}
-			} 
-			//cluster change when capacity constraint is not met
-			else {
-//				if(cluster > 0)
-//					cluster++; 
-			}
-		}
-	}
-
-	private VRPNode getSmallestOrGreaterNodeBasedOnItsAngle(Dictionary<VRPNode,float> angles, List<VRPNode> nodesOfQuadrant, List<VRPNode> selectedNodes){
-		VRPNode res = null;
-		float best = smallestAngleClustering ? float.MaxValue : float.MinValue;
-
-		foreach (VRPNode n in nodesOfQuadrant) {
-			if (!selectedNodes.Contains (n)) {
-				float angle = angles [n];
-
-				if ((smallestAngleClustering && angle < best) || (!smallestAngleClustering && angle > best)) {
-					best = angle;
-					res = n;
-				}
-			}
-		}
-
-		return res;
-	}
+//	private VRPNode getSmallestOrGreaterNodeBasedOnItsAngle(Dictionary<VRPNode,float> angles, List<VRPNode> nodesOfQuadrant, List<VRPNode> selectedNodes){
+//		VRPNode res = null;
+//		float best = smallestAngleClustering ? float.MaxValue : float.MinValue;
+//
+//		foreach (VRPNode n in nodesOfQuadrant) {
+//			if (!selectedNodes.Contains (n)) {
+//				float angle = angles [n];
+//
+//				if ((smallestAngleClustering && angle < best) || (!smallestAngleClustering && angle > best)) {
+//					best = angle;
+//					res = n;
+//				}
+//			}
+//		}
+//
+//		return res;
+//	}
 
 	private bool allNodesVisited(List<VRPNode> nodes){
 		bool all = true;
@@ -756,6 +787,37 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		return improvedACO ? System.Math.Pow (edgePheromone, pheromoneInfluence) * System.Math.Pow (visibility, visibilityInfluence) 
 				: edgePheromone * System.Math.Pow (visibility, visibilityInfluence);
+	}
+
+	/// <summary>
+	/// Ant Spawn process 
+	/// </summary>
+	/// <returns>The ant game object.</returns>
+	/// <param name="curIt">Current iteration index.</param>
+	/// <param name="antIndex">Ant index.</param>
+	/// param name="ant">The Ant.</param>
+	/// /// param name="depot">The Depot.</param>
+	private VRPAntGameObject spawnAntProcess(int curIt, int antIndex, VRPAnt ant, VRPNode depot){
+		VRPAntGameObject aGO = antGOs.Find(a=>a.Ant.TheObject.Id.Equals(ant.TheObject.Id));
+		if (curIt == 0 || (curIt > 0 && aGO != null && aGO.DestroyWhenDepotReached)) {
+			if(curIt>0)
+				antGOs = new List<VRPAntGameObject>();
+
+			aGO = spawnAnts (ant, depot);
+
+			if (!antGOs.Contains (aGO))
+				antGOs.Add (aGO);
+		}
+		else if(curIt > 0 && aGO != null && !aGO.DestroyWhenDepotReached){
+			aGO.gameObject.SetActive (true);
+		}
+		curAntGO = aGO;
+
+		if (antColors.Length > antIndex+1) {
+			aGO.PheromoneColor = antColors [antIndex+1];
+		}
+
+		return aGO;
 	}
 		
 
@@ -860,7 +922,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 			vrpLoaded = true;
 
-			Debug.Log ("VRP loaded");
+			UnityEngine.Debug.Log ("VRP loaded");
 		}
 	}
 

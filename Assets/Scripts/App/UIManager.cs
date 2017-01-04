@@ -54,6 +54,12 @@ public class UIManager : Singleton<UIManager> {
 	[SerializeField]
 	private Toggle tgInitPheromone;
 
+	[SerializeField]
+	private Toggle tgVisualProcess;
+
+	[SerializeField]
+	private Text lbExecutionTime;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -86,6 +92,10 @@ public class UIManager : Singleton<UIManager> {
 	public void Start(){
 		initialAntSpeed = ACOSolver.Instance.AntSpeed;
 		tgInitPheromone.isOn = ACOSolver.Instance.VisualInitPheromone;
+	}
+
+	public void LateUpdate(){
+		showCurrentExecutionTime ();
 	}
 
 	//--------------------------------------
@@ -134,6 +144,20 @@ public class UIManager : Singleton<UIManager> {
 
 	public void showInitialPheromone(){
 		ACOSolver.Instance.VisualInitPheromone = tgInitPheromone.isOn;
+	}
+
+	public void showVisualProcess(){
+		ACOSolver.Instance.ShowVisualProcess = tgVisualProcess.isOn;
+	}
+
+	public void showCurrentExecutionTime(){
+		System.TimeSpan ts = ACOSolver.Instance.StopWatch.Elapsed;
+
+		if (lbExecutionTime) {
+			lbExecutionTime.text = System.String.Format ("{0}: {1:00}:{2:00}:{3:00}.{4:0000}", "Time",
+				ts.Hours, ts.Minutes, ts.Seconds, 
+				ts.Milliseconds);
+		}
 	}
 
 
