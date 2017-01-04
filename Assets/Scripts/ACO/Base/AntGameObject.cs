@@ -220,7 +220,7 @@ public class AntGameObject<T,N,E,P> : MonoBehaviour where N:Node where E:ACOEdge
 
 	public virtual IEnumerator spawnPheromone(){
 		canSpawnPheromone = false;
-		float waitTime = (float) (Time.deltaTime*(movSpeed)*(isInitializationAnt ? 0.000000000001f:1f));
+		float waitTime = (float) (Time.deltaTime*(movSpeed/10f)*(isInitializationAnt ? 0.000001f:1f));
 		yield return new WaitForSeconds (waitTime);
 		P p = Instantiate (ACOSolver.Instance.PbPheromone, transform.position, Quaternion.identity) as P;
 		p.Edge = currentEdgeThrough;
