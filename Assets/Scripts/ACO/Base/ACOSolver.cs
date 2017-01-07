@@ -223,6 +223,15 @@ public class ACOSolver : Singleton<ACOSolver>{
 			return this.stopWatch;
 		}
 	}
+
+	public bool DoMutation {
+		get {
+			return this.doMutation;
+		}
+		set {
+			doMutation = value;
+		}
+	}
 		
 	//--------------------------------------
 	// Unity Methods

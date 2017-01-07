@@ -58,7 +58,13 @@ public class UIManager : Singleton<UIManager> {
 	private Toggle tgVisualProcess;
 
 	[SerializeField]
+	private Toggle tgMakeMutationProcess;
+
+	[SerializeField]
 	private Text lbExecutionTime;
+
+	[SerializeField]
+	private Text lbPreSolTitle;
 
 	[SerializeField]
 	private Text lbPreSol;
@@ -83,6 +89,9 @@ public class UIManager : Singleton<UIManager> {
 		resumeBtn.gameObject.SetActive (false);
 		settingsPnlOpened = false;
 		settingsPnl.SetActive (false);
+		showInitialPheromone ();
+		showVisualProcess ();
+		makeMutationProcess ();
 	}
 
 	public void OnEnable(){
@@ -154,6 +163,12 @@ public class UIManager : Singleton<UIManager> {
 
 	public void showVisualProcess(){
 		ACOSolver.Instance.ShowVisualProcess = tgVisualProcess.isOn;
+	}
+
+	public void makeMutationProcess(){
+		bool isOn = tgMakeMutationProcess.isOn;
+		ACOSolver.Instance.DoMutation = isOn;
+		lbPreSolTitle.text = isOn ? "Pre-mutation:" : "Pre 2-opt:";
 	}
 
 	public void showCurrentExecutionTime(){
