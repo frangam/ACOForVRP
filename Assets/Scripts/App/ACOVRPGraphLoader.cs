@@ -227,6 +227,9 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			nodeGOs.Add(nodeGO);
 		}
 
+		depot.Node.X = depot.transform.position.x;
+		depot.Node.Y = depot.transform.position.y;
+
 		//fix distance with 3d world coordinates
 		if (fixEdgeWeightWithRealDist) {
 			foreach (ACOVRPEdge e in vrp.Graph.Edges) {

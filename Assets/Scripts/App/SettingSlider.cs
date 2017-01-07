@@ -140,6 +140,12 @@ public class SettingSlider : MonoBehaviour {
 			slider.maxValue = 1000;
 			Value = ACOSolver.Instance.Iterations;
 			break;
+		case SettingType.INITIAL_PHEROMONE:
+			slider.wholeNumbers = false;
+			slider.minValue = 0.0000001f;
+			slider.maxValue = 1;
+			Value = ACOSolver.Instance.InitialPheromone;
+			break;
 		}
 		initialValue = Value;
 	}
@@ -166,6 +172,9 @@ public class SettingSlider : MonoBehaviour {
 			break;
 		case SettingType.ITERATION:
 			ACOSolver.Instance.Iterations = (int) Value;
+			break;
+		case SettingType.INITIAL_PHEROMONE:
+			ACOSolver.Instance.InitialPheromone = Value;
 			break;
 		}
 		TextValue.text = PreText + " " + StringValue;

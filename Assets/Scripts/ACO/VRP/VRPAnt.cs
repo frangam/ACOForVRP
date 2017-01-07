@@ -47,9 +47,21 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 		}
 	}
 
+	public List<VRPNode> Customers{
+		get{
+			return CompleteTourWithOutDepot;
+		}
+	}
+
 	public int TotalCustomers{
 		get{
 			return (Paths.Find(r=>r.NodeA.IsDepot && r.NodeB.IsDepot) != null) ? CompleteTourWithOutDepot.Count + 1 : CompleteTourWithOutDepot.Count;
+		}
+	}
+
+	public int TotalDemandSatisfied{
+		get{
+			return Customers.Sum (c => c.Demand);
 		}
 	}
 
@@ -58,6 +70,10 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 	//--------------------------------------
 	public VRPAnt(VRPVehicle v):base(v){
 		
+	}
+
+	public VRPAnt(VRPAnt a):base(a){
+
 	}
 
 	//--------------------------------------
@@ -93,4 +109,12 @@ public class VRPAnt : Ant<VRPVehicle,VRPNode, ACOVRPEdge> {
 		return base.checkNodeConditionIn2Opt (tour, index) && !tour[index].IsDepot;
 	}
 
+
+	public override List<VRPNode> getInitialCompleteTourForTwoOPT ()
+	{
+		List<VRPNode> res = CompleteTour;
+//		res.RemoveAt (res.Count - 1); //remove last (depot)
+
+		return res;
+	}
 }

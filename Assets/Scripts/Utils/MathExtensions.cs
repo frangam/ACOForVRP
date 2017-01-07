@@ -17,49 +17,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VRPNodeGameObject : MonoBehaviour {
-	//--------------------------------------
-	// Setting Attributes
-	//--------------------------------------
-	[SerializeField]
-	private VRPNode node;
+public static class MathExtensions  {
+	/// <summary>
+	/// Custom Clamp method the specified val, min and max.
+	/// 
+	/// Based on: http://stackoverflow.com/questions/2683442/where-can-i-find-the-clamp-function-in-net
+	/// </summary>
+	/// <param name="val">Value.</param>
+	/// <param name="min">Minimum.</param>
+	/// <param name="max">Max.</param>
+	/// <typeparam name="T">The 1st type parameter.</typeparam>
+	public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
+	{
+		T res = val;
 
-	[SerializeField]
-	private TextMesh idTxt;
+		if (val.CompareTo(min) < 0) 
+			res = min;
+		else if(val.CompareTo(max) > 0) 
+			res = max;
 
-	[SerializeField]
-	private TextMesh demandTxt;
-
-	//--------------------------------------
-	// Getters & Setters
-	//--------------------------------------
-	public VRPNode Node {
-		get {
-			return this.node;
-		}
-	}
-
-	//--------------------------------------
-	// Unity Methods
-	//--------------------------------------
-	void Start () {
-		
-	}
-
-	//--------------------------------------
-	// Public Methods
-	//--------------------------------------
-	public void loadNode(VRPNode n){
-		node = n;
-
-		if (idTxt)
-			idTxt.text = node.Id;
-
-		if (demandTxt)
-			demandTxt.text = node.Demand.ToString ();
+		return res;
 	}
 }

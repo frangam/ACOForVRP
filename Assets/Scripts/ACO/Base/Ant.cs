@@ -100,10 +100,12 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	//--------------------------------------
 	// Constructors
 	//--------------------------------------
-	public Ant(T pTheObject){
+	public Ant(T pTheObject):this(pTheObject, new List<E>(), 0){}
+	public Ant(Ant<T,N,E> a): this(a.theObject, a.paths, a.routeProcessingTimeCost){}
+	public Ant(T pTheObject, List<E> e, int rp){
 		theObject = pTheObject;
-		routeProcessingTimeCost = 0;
-		paths = new List<E>();
+		routeProcessingTimeCost = rp;
+		paths = e;
 	}
 
 	//--------------------------------------
@@ -131,7 +133,7 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 	/// </summary>
 	/// <returns>The two OPT paht.</returns>
 	public virtual List<N> improveCurrentRouteWithTwoOPT(Graph<N, E> graph){
-		List<N> curTour = new List<N>(CompleteTour);
+		List<N> curTour = new List<N>(getInitialCompleteTourForTwoOPT());
 		float minDist = TotalRouteWeight; //current distance cost
 		float curCost = 0;
 
@@ -153,6 +155,10 @@ public class Ant<T,N,E> where N:Node where E:ACOEdge<N> {
 		}
 
 		return curTour;
+	}
+
+	public virtual List<N> getInitialCompleteTourForTwoOPT(){
+		return CompleteTour;
 	}
 
 	public virtual bool checkNodeConditionIn2Opt(List<N> tour, int index){

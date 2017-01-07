@@ -55,7 +55,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private int iterations = 10;
 
 	[SerializeField]
-	private double initialPheromone = 0.001;
+	private float initialPheromone = 0.001f;
 
 	[SerializeField]
 	private float pheromoneInfluence = 2f;
@@ -92,6 +92,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 	[SerializeField]
 	private Color[] antColors;
 
+	[SerializeField]
+	private Color[] solColors;
+
+	[SerializeField]
+	private bool doMutation = true;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -127,9 +133,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 			impIACO_Q = value;
 		}
 	}
-	public double InitialPheromone {
+	public float InitialPheromone {
 		get {
 			return this.initialPheromone;
+		}
+		set{
+			this.initialPheromone = value;
 		}
 	}
 	public VRPPheromoneGO PbPheromone {
@@ -245,6 +254,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Private Methods
 	//--------------------------------------
+	/// <summary>
+	/// ACO Algorithm.
+	/// 
+	/// For IACO: 
+	/// B. Yu, Z. Z. Yang, and B. Yao, “An improved ant colony optimization for vehicle routing problem,” Eur. J. Oper. Res., 2009.
+	/// </summary>
 	private IEnumerator ACO(){
 		antGOs = new List<VRPAntGameObject>();
 
@@ -340,30 +355,65 @@ public class ACOSolver : Singleton<ACOSolver>{
 				}//_end_for_each_ant
 			}//_end_while_customers
 
-		
+			VRPAnt aN = ants.Find (a => a.Paths.Count == 0);
+			if (aN != null) {
+				int x = 0;
+				UnityEngine.Debug.Log ("");
+				UnityEngine.Debug.Log ("path zero before mutation");
+			}
+
 			//previous results
-			foreach (VRPAnt a in ants) {
-				string tour = "Prev: A"+a.TheObject.Id+">>";
-				foreach (ACOVRPEdge e in a.Paths) {
-					tour += e.Id + ".";
+			string solution = "";
+			for (int aind=0; aind<ants.Count; aind++) {
+				string tour = ants[aind].Paths[0].NodeA.Id+"-";
+				for (int ind=0; ind<ants[aind].Paths.Count; ind++) {
+					tour += ind < ants[aind].Paths.Count-1 ? ants[aind].Paths[ind].NodeB.Id + "-" : ants[aind].Paths[ind].NodeB.Id;
 				}
-				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+				solution += aind < ants.Count-1 ? tour+". " : tour;
 			}
+			UIManager.Instance.showTotalRoutesCost (true, solution, ants.Sum (a=>a.TotalRouteWeight)); 
 
-			//we draw the final solution before improve it
-			if (i == iterations - 1) {
-				stopWatch.Stop ();
-
-				if(!showVisualProcess)
-					StartCoroutine (drawFinalOptimization ());
-			}
+				
 
 			//--------------------------------------
 			//UPDATING PHASE
 			//--------------------------------------
-//			if (i < iterations - 1) {
-				//2-optimal heuristic
-				improveSolutionWithTwoOPT (ants, depot);
+			//mutation
+			if (doMutation) {
+				List<VRPAnt> antsCopy = new List<VRPAnt> (ants);
+				List<VRPAnt> mutated = mutation (ants, i);
+				if (mutated != null) {
+					ants = mutated;
+				} else {
+					ants = new List<VRPAnt> (antsCopy);
+					//				UnityEngine.Debug.Log ("restoring ants from copy. no mutation");
+				}
+			}
+
+			aN = ants.Find (a => a.Paths.Count == 0);
+			if (aN != null) {
+				int x = 0;
+				UnityEngine.Debug.Log ("");
+				UnityEngine.Debug.Log ("path zero after mutation");
+			}
+
+			//2-optimal heuristic
+			ants = improveSolutionWithTwoOPT (ants, depot);
+
+			aN = ants.Find (a => a.Paths.Count == 0);
+			if (aN != null) {
+				int x = 0;
+				UnityEngine.Debug.Log ("");
+				UnityEngine.Debug.Log ("path zero after 2-opt");
+			}
+			//we draw the final solution before improve it
+			if (i == iterations - 1) {
+				stopWatch.Stop ();
+
+//				if(!showVisualProcess)
+					StartCoroutine (drawFinalOptimization ());
+			}
 
 				//			//update graph nodes with the best solution
 				//			List<VRPNode> bestSol = new List<VRPNode>(){depot};
@@ -379,28 +429,20 @@ public class ACOSolver : Singleton<ACOSolver>{
 				//			vrp.Graph.Nodes.AddRange (bestSol);
 				//			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
 				//
-				//optimal results
-				foreach (VRPAnt a in ants) {
-					string tour = "Impv: A" + a.TheObject.Id + ">>";
-					foreach (ACOVRPEdge e in a.Paths) {
-						tour += e.Id + ".";
-					}
-					UnityEngine.Debug.Log (tour + ". Cost: " + a.TotalRouteWeight.ToString ());
+			//optimal results
+			solution = "";
+			for (int aind=0; aind<ants.Count; aind++) {
+				string tour = ants[aind].Paths[0].NodeA.Id+"-";
+				for (int ind=0; ind<ants[aind].Paths.Count; ind++) {
+					tour += ind < ants[aind].Paths.Count-1 ? ants[aind].Paths[ind].NodeB.Id + "-" : ants[aind].Paths[ind].NodeB.Id;
 				}
-
-
-				//pheromone global update
-				pheromoneGlobalUpdate ();
-//			}
-		}
-
-		//results
-		foreach (VRPAnt a in ants) {
-			string tour = "A"+a.TheObject.Id+">>";
-			foreach (ACOVRPEdge e in a.Paths) {
-				tour += e.Id + ".";
+				//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+				solution += aind < ants.Count-1 ? tour+". " : tour;
 			}
-			UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+			UIManager.Instance.showTotalRoutesCost (false, solution, ants.Sum (a=>a.TotalRouteWeight)); 
+
+			//pheromone global update
+			pheromoneGlobalUpdate ();
 		}
 	}
 
@@ -431,7 +473,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		yield return new WaitForSeconds (startDelay);
 
-		int antIndex = 1; //color at index 0 is for initialization pheromone
+		int antIndex = 0; //color at index 0 is for initialization pheromone
 		foreach (VRPAnt ant in ants) {
 			VRPAntGameObject aGO = antGOs.Find(a=>a.Ant.TheObject.Id.Equals(ant.TheObject.Id));
 			if (aGO == null) {
@@ -441,7 +483,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 			}
 
 			if (antColors.Length > antIndex) {
-				aGO.PheromoneColor = antColors [antIndex];
+				aGO.PheromoneColor = solColors [antIndex];
 				antIndex++;
 			}
 
@@ -472,7 +514,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 		foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
 			List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
 			int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
-			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*1.5;
+			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*3;
 			int rest = !deleteAll ? (int)(res) : 0;
 
 			pheromoneTrails [pEd].Shuffle ();
@@ -499,120 +541,14 @@ public class ACOSolver : Singleton<ACOSolver>{
 		}
 	}
 
-	private void improveSolutionWithTwoOPT(List<VRPAnt> currentSolution, VRPNode depot){
+	private List<VRPAnt> improveSolutionWithTwoOPT(List<VRPAnt> currentSolution, VRPNode depot){
 		List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //result
-		Dictionary<VRPNode,float> angles = new Dictionary<VRPNode, float> (); //node angles
-		Dictionary<VRPAnt, Dictionary<int, List<VRPNode>>> nodesInQuadrants = new Dictionary<VRPAnt, Dictionary<int, List<VRPNode>>>();
-		Dictionary<VRPAnt, List<VRPNode>> nodesInClusters = new Dictionary<VRPAnt,List<VRPNode>>();
-		Dictionary<VRPAnt, int> currentQuantities = new Dictionary<VRPAnt, int>();
 
-//		//pass to a dictionary ant capacity
-//		foreach (VRPAnt a in currentSolution)
-//			currentQuantities.Add (a, a.TheObject.Quantity);
-//
-//		//initialization
-//		foreach (VRPAnt a in currentSolution) {
-//			//each route of current ant
-//			foreach (VRPNode n in a.CompleteTour) {
-//				if (!n.IsDepot) {
-//					//locate in quadrant
-//					int quadrant = 1;
-//
-//					if(n.XPol2Cart >= 0 && n.YPol2Cart >= 0)
-//						quadrant = 1;
-//					else if (n.XPol2Cart <= 0 && n.YPol2Cart >= 0)
-//						quadrant = 2;
-//					else if (n.XPol2Cart <= 0 && n.YPol2Cart <= 0)
-//						quadrant = 3;
-//					else if (n.XPol2Cart >= 0 && n.YPol2Cart <= 0)
-//						quadrant = 4;
-//
-//					//register node and quadrant in a dictionary
-//					if (!nodesInQuadrants.ContainsKey (a))
-//						nodesInQuadrants.Add (a, new Dictionary<int, List<VRPNode>> (){ { quadrant, new List<VRPNode> (){ n } } });
-//					else if (!nodesInQuadrants [a].ContainsKey (quadrant))
-//						nodesInQuadrants [a].Add(quadrant, new List<VRPNode> (){ n });
-//					else if(!nodesInQuadrants[a][quadrant].Contains(n))
-//						nodesInQuadrants[a][quadrant].Add (n);						
-//
-//					//calculate angles
-//					if (!angles.ContainsKey (n)) {
-//						float angle = Mathf.Asin ((n.YPol2Cart - depot.YPol2Cart) / (Mathf.Sqrt (Mathf.Pow (n.XPol2Cart - depot.XPol2Cart, 2) + Mathf.Pow (n.YPol2Cart - depot.YPol2Cart, 2))));
-//						angles.Add (n, angle);
-//					}
-//				}
-//			}
-//		}
-//
-//		//Phase I: clustering creation
-//		if (TwoOPTForward) {
-//			foreach (VRPAnt a in currentSolution) {
-//				for (int i = 4; i > 0; i--) { //quadrant 4 to 1
-//					if(nodesInQuadrants[a].ContainsKey(i))
-//						createClusters (currentSolution, angles, nodesInQuadrants[a][i], currentQuantities, nodesInClusters, i, a);
-//				}
-//			}
-//		} else {
-//			foreach (VRPAnt a in currentSolution) {
-//				for (int i = 1; i < 5; i++) { //quadrant 1 to 4
-//					if(nodesInQuadrants[a].ContainsKey(i))
-//						createClusters (currentSolution, angles, nodesInQuadrants[a][i], currentQuantities, nodesInClusters, i, a);
-//				}
-//			}
-//		}
-//
-//		//Phase II: route creation
-//		//create Distance Matrix
-//		foreach(VRPAnt a in nodesInClusters.Keys){
-//			Dictionary<VRPNode,float> distMatrix = new Dictionary<VRPNode,float> ();
-//
-//			//create Distance Matrix
-//			foreach (VRPNode n in nodesInClusters[a]) {
-//				distMatrix.Add (n, Mathf.Sqrt(Mathf.Pow(n.XPol2Cart-depot.XPol2Cart,2)+Mathf.Pow(n.YPol2Cart-depot.YPol2Cart,2)));
-////				distMatrix.Add (n, vrp.Graph.Edges.Find(e=>e.NodeA.Id.Equals(n.Id) && e.NodeB.Id.Equals(depot.Id)).Weight);
-//			}
-//
-//			//local search with min distance
-//			List<VRPNode> shortestPath = new List<VRPNode>();
-//			foreach (KeyValuePair<VRPNode,float> pair in distMatrix.OrderBy(p=>p.Value).ToList())
-//				shortestPath.Add (pair.Key);
-//			
-//			List<ACOVRPEdge> improvedRoutes = new List<ACOVRPEdge> (); //routes for ant asociated to the cluster
-//
-//			VRPNode nFrom = depot, nTo = shortestPath [0];
-//			KeyValuePair<int, double> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
-//			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
-//
-//			for(int i=0; i<shortestPath.Count-1; i++){
-//				nFrom = shortestPath [i];
-//				nTo = shortestPath[i+1];
-//				edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
-//				improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
-//			}
-//				
-//			nFrom = shortestPath[shortestPath.Count-1];
-//			nTo = depot;
-//			edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
-//			improvedRoutes.Add(new ACOVRPEdge(nFrom, nTo, edgeWP.Key, edgeWP.Value));
-//
-//			//update routes of the ant of this cluster
-//			currentSolution.Find(c=>c.TheObject.Id.Equals(a.TheObject.Id)).Paths = new List<ACOVRPEdge>(improvedRoutes);
-//		}
-
-		foreach (VRPAnt a in currentSolution) {
-			//-------------
-			//TODO for testing
-			string tour = "";
-			foreach (ACOVRPEdge e in a.Paths) {
-				tour += e.Id + ".";
-			}
-			UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
-			//-------------
-
+		foreach (VRPAnt a in currentSolution) { 
 			List<VRPNode> completeTour = a.improveCurrentRouteWithTwoOPT (vrp.Graph);
 			improvedRoutes = new List<ACOVRPEdge> ();
 
-			for(int i=0; i<completeTour.Count-1; i++){
+			for(int i=0; i<completeTour.Count-1; i++){ //completeTour.Count-2 because last node is depot
 				VRPNode nFrom = completeTour [i];
 				VRPNode nTo = completeTour[i+1];
 				KeyValuePair<float, double> edgeWP = getWeightAndPheromoneOfEdge (nFrom, nTo);
@@ -620,17 +556,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 			}
 
 			a.Paths = new List<ACOVRPEdge> (improvedRoutes);
-
-
-			//-------------
-			//TODO for testing
-			tour = "";
-			foreach (ACOVRPEdge e in a.Paths) {
-				tour += e.Id + ".";
-			}
-			UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
-			//-------------
 		}
+
+		return currentSolution;
 	}
 
 	private KeyValuePair<float, double> getWeightAndPheromoneOfEdge(VRPNode a, VRPNode b){
@@ -644,82 +572,6 @@ public class ACOSolver : Singleton<ACOSolver>{
 		return res;
 	}
 
-//	private void createClusters(List<VRPAnt> currentSolution,Dictionary<VRPNode,float> angles,List<VRPNode> nodesOfQuadrant
-//		,Dictionary<VRPAnt, int> currentQuantities, Dictionary<VRPAnt, List<VRPNode>> nodesInClusters, int quadrant, VRPAnt curAnt){ 
-//		List<VRPNode> selectedNodes = new List<VRPNode> ();
-//
-//		//select node for linking it
-//		VRPNode nodeSelected = getSmallestOrGreaterNodeBasedOnItsAngle (angles, nodesOfQuadrant, selectedNodes);
-//
-//		if (nodeSelected != null) {
-//			nodesOfQuadrant.Remove (nodeSelected);
-//
-//			//get the ant has that node in its complete tour
-////			VRPAnt ant = currentSolution.Find (x => x.CompleteTour.Find (n => n.Id.Equals (nodeSelected.Id)) != null);
-//			int quantity = currentQuantities [curAnt]; //get ant quantity
-//
-//			if (nodeSelected.Demand <= quantity) {
-//				selectedNodes.Add (nodeSelected);
-//				quantity -= nodeSelected.Demand;
-//				currentQuantities [curAnt] = quantity; //update quantity counter
-//
-//				//while exists a node to link in this current quadrant
-//				while (nodeSelected != null) {
-//					nodeSelected = getSmallestOrGreaterNodeBasedOnItsAngle (angles, nodesOfQuadrant, selectedNodes);
-//
-//					if (nodeSelected != null) {
-//						nodesOfQuadrant.Remove (nodeSelected);
-//
-//						//get the ant has that node in its complete tour
-////						ant = currentSolution.Find (x => x.CompleteTour.Find (n => n.Id.Equals (nodeSelected.Id)) != null);
-//						quantity = currentQuantities [curAnt]; //get ant quantity
-//
-//						//cluster change when capacity constraint is not met
-//						if (nodeSelected.Demand > quantity) {
-//							if (nodesInClusters.ContainsKey (curAnt))
-//								nodesInClusters [curAnt].AddRange (selectedNodes);
-//							else
-//								nodesInClusters.Add (curAnt, selectedNodes);
-////							cluster++; 
-//						} else {
-//							selectedNodes.Add (nodeSelected);
-//							quantity -= nodeSelected.Demand;
-//							currentQuantities [curAnt] = quantity; //update quantity counter
-//						}
-//					} else {
-//						if (nodesInClusters.ContainsKey (curAnt))
-//							nodesInClusters [curAnt].AddRange (selectedNodes);
-//						else
-//							nodesInClusters.Add (curAnt, selectedNodes);
-//					}
-//				}
-//			} 
-//			//cluster change when capacity constraint is not met
-//			else {
-////				if(cluster > 0)
-////					cluster++; 
-//			}
-//		}
-//	}
-
-//	private VRPNode getSmallestOrGreaterNodeBasedOnItsAngle(Dictionary<VRPNode,float> angles, List<VRPNode> nodesOfQuadrant, List<VRPNode> selectedNodes){
-//		VRPNode res = null;
-//		float best = smallestAngleClustering ? float.MaxValue : float.MinValue;
-//
-//		foreach (VRPNode n in nodesOfQuadrant) {
-//			if (!selectedNodes.Contains (n)) {
-//				float angle = angles [n];
-//
-//				if ((smallestAngleClustering && angle < best) || (!smallestAngleClustering && angle > best)) {
-//					best = angle;
-//					res = n;
-//				}
-//			}
-//		}
-//
-//		return res;
-//	}
-
 	private bool allNodesVisited(List<VRPNode> nodes){
 		bool all = true;
 
@@ -730,7 +582,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 				break;
 		}
 
-				return all;
+		return all;
 	}
 
 	private VRPNode selectNextNodeForVisiting(VRPNode current, int antQuantity){
@@ -819,6 +671,140 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		return aGO;
 	}
+
+	private List<VRPAnt> mutation(List<VRPAnt> ants, int curIt){
+		List<VRPAnt> res = new List<VRPAnt> ();
+		List<VRPAnt> antsForMutating = getAntsForMutating (ants, curIt);
+		bool violatedCapacity = false;
+
+		foreach (VRPAnt curMutAnt in antsForMutating) {
+			int curAntIndex = ants.IndexOf (curMutAnt);
+			List<VRPAnt> otherAnts = ants.Where (a => !a.TheObject.Id.Equals (curMutAnt.TheObject.Id)).ToList();
+			int indexRandom = Random.Range(0, otherAnts.Count);
+			int selectdAntIndex = ants.IndexOf (otherAnts [indexRandom]);
+			VRPAnt selectedAnt = ants[selectdAntIndex]; //get randomly another ant distinct to the current one
+			List<VRPNode> customersFirst = curMutAnt.Customers; 
+			List<VRPNode> customersSecond = selectedAnt.Customers;
+
+
+			//first shuffle customers for random search in every iteration
+			customersFirst.Shuffle ();
+			customersSecond.Shuffle ();
+
+			//select two nodes without violating capacity constraint
+			//iterate over each node
+			for (int i = 0; i < customersFirst.Count; i++) {
+				VRPNode nExOne = customersFirst [i];
+
+				for (int j = 0; j < customersSecond.Count; j++) {
+					VRPNode nExTwo = customersSecond [j];
+
+					//exchange at current ant
+					if (!nExOne.IsDepot && !nExTwo.IsDepot) {
+						//exchange node two in first route
+						int edgesUpdatedWithNode = 0;
+						Dictionary<int, ACOVRPEdge> edgesForUpdateFirst = new Dictionary<int, ACOVRPEdge> ();
+						for (int k = 0; k < curMutAnt.Paths.Count && edgesUpdatedWithNode < 2; k++) {
+							ACOVRPEdge e = curMutAnt.Paths [k];
+							if (e.NodeA.Id.Equals (nExOne.Id)) {
+								edgesForUpdateFirst.Add (k, new ACOVRPEdge (nExTwo, e.NodeB, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (nExTwo.Id) && x.NodeB.Id.Equals (e.NodeB.Id)).Weight, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (nExTwo.Id) && x.NodeB.Id.Equals (e.NodeB.Id)).Pheromone));
+								edgesUpdatedWithNode++;
+							} else if (e.NodeB.Id.Equals (nExOne.Id)) {
+								edgesForUpdateFirst.Add (k, new ACOVRPEdge (e.NodeA, nExTwo, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (e.NodeA.Id) && x.NodeB.Id.Equals (nExTwo.Id)).Weight, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (nExTwo.Id) && x.NodeB.Id.Equals (e.NodeB.Id)).Pheromone));
+								edgesUpdatedWithNode++;
+							}
+						}
+
+						violatedCapacity = curMutAnt.TotalDemandSatisfied > curMutAnt.TheObject.Quantity;
+
+						//exchange at selected randomly ant
+						if (!violatedCapacity) {
+							//exchange node two in first route
+							edgesUpdatedWithNode = 0;
+							Dictionary<int, ACOVRPEdge> edgesForUpdateSecond = new Dictionary<int, ACOVRPEdge> ();
+							for (int k = 0; k < selectedAnt.Paths.Count && edgesUpdatedWithNode < 2; k++) {
+								ACOVRPEdge e = selectedAnt.Paths [k];
+								if (e.NodeA.Id.Equals (nExTwo.Id)) {
+									edgesForUpdateSecond.Add (k, new ACOVRPEdge (nExOne, e.NodeB, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (nExOne.Id) && x.NodeB.Id.Equals (e.NodeB.Id)).Weight, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (nExOne.Id) && x.NodeB.Id.Equals (e.NodeB.Id)).Pheromone));
+									edgesUpdatedWithNode++;
+								} else if (e.NodeB.Id.Equals (nExTwo.Id)) {
+									edgesForUpdateSecond.Add (k, new ACOVRPEdge (e.NodeA, nExOne, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (e.NodeA.Id) && x.NodeB.Id.Equals (nExOne.Id)).Weight, vrp.Graph.Edges.Find (x => x.NodeA.Id.Equals (e.NodeA.Id) && x.NodeB.Id.Equals (nExOne.Id)).Pheromone));
+									edgesUpdatedWithNode++;
+								}
+							}
+
+							violatedCapacity = selectedAnt.TotalDemandSatisfied > selectedAnt.TheObject.Quantity;
+
+							if (!violatedCapacity) {
+								//now update definitely the edges on the ants
+								foreach (int k in edgesForUpdateFirst.Keys)
+									ants[curAntIndex].Paths [k] = edgesForUpdateFirst [k];
+								foreach (int k in edgesForUpdateSecond.Keys)
+									ants[selectdAntIndex].Paths [k] = edgesForUpdateSecond [k];
+
+								//							//add the ants for the current solution mutated
+								//							res.Add (firstAnt);
+								//							res.Add (secondAnt);
+								break; //we have a valid two mutated tours
+							}
+						}
+					}
+				}
+
+				if (!violatedCapacity) {
+					break; //we have a valid two mutated tours
+				}
+			}
+		}
+	
+		if (!violatedCapacity) {
+			//first add only the ants not included in mutation
+//			foreach (VRPAnt a in ants) {
+//				VRPAnt m = antsForMutating.Find (x=>a.TheObject.Id.Equals (x.TheObject.Id));
+//
+//				if (m==null) {
+//					res.Add (a);
+//				}
+//			}
+			res = ants;
+		} else {
+			res = null;
+		}
+
+		return res;
+	}
+		
+
+	private List<VRPAnt> getAntsForMutating(List<VRPAnt> ants, int curIt){
+		Dictionary<VRPAnt, float> probs = new Dictionary<VRPAnt, float> (); //all mutation probabilitis for each ant
+		List<VRPAnt> res = new List<VRPAnt>();
+
+		foreach (VRPAnt a in ants) {
+			float p = mutationProbability (a, curIt);
+
+			float dice = Random.Range (0, 1); // Throw the dice
+
+			if(p >= dice)
+				probs.Add (a, p);
+		}
+
+		//return the mutating ants with the greatest mutation probability values
+		List<KeyValuePair<VRPAnt, float>> orderedByDescending = probs.OrderByDescending(pair => pair.Value).ToList<KeyValuePair<VRPAnt, float>>();
+		foreach (KeyValuePair<VRPAnt, float> p in orderedByDescending) {
+			res.Add (p.Key);
+		}
+
+		return res;
+	}
+
+	private float mutationProbability(VRPAnt ant, int curIt){
+		float prob = 0f;
+		float pMin = 1.0f / ant.TotalCustomers;
+		float pMax = 1.0f / vrp.Vehicles.Count;
+		prob = pMin + Mathf.Pow((pMax-pMin), (1-((curIt+1)*1.0f))/(Iterations*1.0f));
+
+		return prob;
+	}
 		
 
 	//--------------------------------------
@@ -856,9 +842,19 @@ public class ACOSolver : Singleton<ACOSolver>{
 				}
 			}
 
-			if(improvedACO)
-				edgeIJ.Pheromone = (ro * edgeIJ.Pheromone) + newPhe;
+			if(improvedACO){
+				double value = (ro * edgeIJ.Pheromone) + newPhe;
+				double tMin = impIACO_Q / (getSumDistanceFromDepotToCustomers (true));
+				double tMax = impIACO_Q / (getSumDistanceFromDepotToCustomers (false));
+				edgeIJ.Pheromone = value.Clamp(tMin, tMax); //clamp the value with these two bounds
+
+//				edgeIJ.Pheromone = value;
+			}
 		}
+	}
+
+	public float getSumDistanceFromDepotToCustomers(bool mulByTwo=true){
+		return vrp.Graph.Edges.Where (e => e.NodeA.IsDepot && !e.NodeB.IsDepot).Sum (e=>mulByTwo ? 2f*e.Weight : e.Weight);
 	}
 
 	public double globalUpdateResult(ACOVRPEdge edge, VRPAnt ant){
@@ -885,6 +881,8 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 		return inc;
 	}
+
+
 
 	//--------------------------------------
 	// Virtual Methods

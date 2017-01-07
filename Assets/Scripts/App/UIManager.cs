@@ -60,6 +60,12 @@ public class UIManager : Singleton<UIManager> {
 	[SerializeField]
 	private Text lbExecutionTime;
 
+	[SerializeField]
+	private Text lbPreSol;
+
+	[SerializeField]
+	private Text lbSolution;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -94,7 +100,7 @@ public class UIManager : Singleton<UIManager> {
 		tgInitPheromone.isOn = ACOSolver.Instance.VisualInitPheromone;
 	}
 
-	public void LateUpdate(){
+	public void Update(){
 		showCurrentExecutionTime ();
 	}
 
@@ -157,6 +163,15 @@ public class UIManager : Singleton<UIManager> {
 			lbExecutionTime.text = System.String.Format ("{0}: {1:00}:{2:00}.{3:0000}", "Time",
 				ts.Minutes, ts.Seconds, 
 				ts.Milliseconds);
+		}
+	}
+
+
+	public void showTotalRoutesCost(bool presolution, string solution, float cost){
+		if (presolution) {
+			lbPreSol.text = string.Format ("{0} ({1:0.00})", solution, cost);
+		} else {
+			lbSolution.text = string.Format ("{0} ({1:0.00})", solution, cost);
 		}
 	}
 

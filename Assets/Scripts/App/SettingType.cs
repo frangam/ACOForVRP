@@ -23,5 +23,6 @@ public enum SettingType{
 	ALPHA, 
 	BETA, 
 	Q,
-	ITERATION
+	ITERATION,
+	INITIAL_PHEROMONE
 }
