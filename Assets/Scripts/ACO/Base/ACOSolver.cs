@@ -461,7 +461,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 				//			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
 				//
 			//optimal results
-			if (totalEdges <= 100 || i == iterations-1) {
+//			if (totalEdges <= 100 || i == iterations-1) {
 				solution = "";
 				
 				for (int aind = 0; aind < ants.Count; aind++) {
@@ -472,8 +472,11 @@ public class ACOSolver : Singleton<ACOSolver>{
 					//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
 					solution += aind < ants.Count - 1 ? tour + ". " : tour;
 				}
+
 				UIManager.Instance.showTotalRoutesCost (false, solution, ants.Sum (x => x.TotalRouteWeight)); 
-			}
+			UnityEngine.Debug.Log ("(It: "+(i+1).ToString()+")Cost: "+ants.Sum (x => x.TotalRouteWeight).ToString());
+
+//			}
 
 
 		}
