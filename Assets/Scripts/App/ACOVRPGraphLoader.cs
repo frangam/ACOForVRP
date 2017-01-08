@@ -153,6 +153,8 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 			}
 		}
 
+		Debug.Log ("Total nodes: "+nodes.Count);
+
 		//edges
 		for (int i=2; i<edgesCosts.Length; i++) {
 			string c = edgesCosts [i];
@@ -176,6 +178,8 @@ public class ACOVRPGraphLoader : Singleton<ACOVRPGraphLoader> {
 				}
 			}
 		}
+
+		Debug.Log ("Total edges: "+edges.Count);
 
 		//update polar coordinates nodes (customers)
 		foreach (VRPNode n in nodes) {

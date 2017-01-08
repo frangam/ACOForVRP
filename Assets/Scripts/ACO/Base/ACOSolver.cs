@@ -99,6 +99,11 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private bool doMutation = true;
 
 	//--------------------------------------
+	// Dispatch Events
+	//--------------------------------------
+	public static event System.Action OnSolved = delegate{};
+
+	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
 	private ACOVRP vrp;
@@ -108,6 +113,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	private bool vrpLoaded = false;
 	private VRPAntGameObject curAntGO;
 	private Stopwatch stopWatch = new Stopwatch();
+	private bool solved = false;
 
 	/// <summary>
 	/// The Ant GameObjects
@@ -117,6 +123,11 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
+	public bool Solved{
+		get{
+			return this.solved;
+		}
+	}
 	public int CurrentIteration {
 		get {
 			return this.currentIteration;
@@ -270,7 +281,9 @@ public class ACOSolver : Singleton<ACOSolver>{
 	/// B. Yu, Z. Z. Yang, and B. Yao, “An improved ant colony optimization for vehicle routing problem,” Eur. J. Oper. Res., 2009.
 	/// </summary>
 	private IEnumerator ACO(){
+		solved = false;
 		antGOs = new List<VRPAntGameObject>();
+		int totalEdges = vrp.Graph.Edges.Count;
 
 		yield return new WaitForSeconds (startDelay*2);
 
@@ -364,25 +377,20 @@ public class ACOSolver : Singleton<ACOSolver>{
 				}//_end_for_each_ant
 			}//_end_while_customers
 
-			VRPAnt aN = ants.Find (a => a.Paths.Count == 0);
-			if (aN != null) {
-				int x = 0;
-				UnityEngine.Debug.Log ("");
-				UnityEngine.Debug.Log ("path zero before mutation");
-			}
 
 			//previous results
 			string solution = "";
-			for (int aind=0; aind<ants.Count; aind++) {
-				string tour = ants[aind].Paths[0].NodeA.Id+"-";
-				for (int ind=0; ind<ants[aind].Paths.Count; ind++) {
-					tour += ind < ants[aind].Paths.Count-1 ? ants[aind].Paths[ind].NodeB.Id + "-" : ants[aind].Paths[ind].NodeB.Id;
+			if (totalEdges <= 100 || i == iterations-1) {
+				for (int aind = 0; aind < ants.Count; aind++) {
+					string tour = ants [aind].Paths [0].NodeA.Id + "-";
+					for (int ind = 0; ind < ants [aind].Paths.Count; ind++) {
+						tour += ind < ants [aind].Paths.Count - 1 ? ants [aind].Paths [ind].NodeB.Id + "-" : ants [aind].Paths [ind].NodeB.Id;
+					}
+					//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+					solution += aind < ants.Count - 1 ? tour + ". " : tour;
 				}
-//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
-				solution += aind < ants.Count-1 ? tour+". " : tour;
+				UIManager.Instance.showTotalRoutesCost (true, solution, ants.Sum (a => a.TotalRouteWeight)); 
 			}
-			UIManager.Instance.showTotalRoutesCost (true, solution, ants.Sum (a=>a.TotalRouteWeight)); 
-
 				
 
 			//--------------------------------------
@@ -400,22 +408,12 @@ public class ACOSolver : Singleton<ACOSolver>{
 				}
 			}
 
-			aN = ants.Find (a => a.Paths.Count == 0);
-			if (aN != null) {
-				int x = 0;
-				UnityEngine.Debug.Log ("");
-				UnityEngine.Debug.Log ("path zero after mutation");
-			}
+
 
 			//2-optimal heuristic
 			ants = improveSolutionWithTwoOPT (ants, depot);
 
-			aN = ants.Find (a => a.Paths.Count == 0);
-			if (aN != null) {
-				int x = 0;
-				UnityEngine.Debug.Log ("");
-				UnityEngine.Debug.Log ("path zero after 2-opt");
-			}
+
 			//we draw the final solution before improve it
 			if (i == iterations - 1) {
 				stopWatch.Stop ();
@@ -439,20 +437,25 @@ public class ACOSolver : Singleton<ACOSolver>{
 				//			vrp.Graph.Nodes.AddRange (currentNodesInGraph);
 				//
 			//optimal results
-			solution = "";
-			for (int aind=0; aind<ants.Count; aind++) {
-				string tour = ants[aind].Paths[0].NodeA.Id+"-";
-				for (int ind=0; ind<ants[aind].Paths.Count; ind++) {
-					tour += ind < ants[aind].Paths.Count-1 ? ants[aind].Paths[ind].NodeB.Id + "-" : ants[aind].Paths[ind].NodeB.Id;
+			if (totalEdges <= 100 || i == iterations-1) {
+				solution = "";
+				for (int aind = 0; aind < ants.Count; aind++) {
+					string tour = ants [aind].Paths [0].NodeA.Id + "-";
+					for (int ind = 0; ind < ants [aind].Paths.Count; ind++) {
+						tour += ind < ants [aind].Paths.Count - 1 ? ants [aind].Paths [ind].NodeB.Id + "-" : ants [aind].Paths [ind].NodeB.Id;
+					}
+					//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
+					solution += aind < ants.Count - 1 ? tour + ". " : tour;
 				}
-				//				UnityEngine.Debug.Log (tour + ". Cost: "+a.TotalRouteWeight.ToString());
-				solution += aind < ants.Count-1 ? tour+". " : tour;
+				UIManager.Instance.showTotalRoutesCost (false, solution, ants.Sum (a => a.TotalRouteWeight)); 
 			}
-			UIManager.Instance.showTotalRoutesCost (false, solution, ants.Sum (a=>a.TotalRouteWeight)); 
 
 			//pheromone global update
 			pheromoneGlobalUpdate ();
 		}
+
+		solved = true;
+		OnSolved ();
 	}
 
 	private IEnumerator initEdges(){
@@ -478,7 +481,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 	}
 
 	private IEnumerator drawFinalOptimization(){
-		updatePheromoneGameObjects ();
+//		updatePheromoneGameObjects ();
 
 		yield return new WaitForSeconds (startDelay);
 
@@ -523,7 +526,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 		foreach (ACOVRPEdge pEd in pheromoneTrails.Keys) {
 			List<VRPPheromoneGO> li = new List<VRPPheromoneGO> ();
 			int totalSpawedAtEdge = pheromoneTrails [pEd].Count;
-			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*3;
+			double res = ((pEd.Pheromone * totalSpawedAtEdge) / pEd.PreviousPheromone)*0.5f;
 			int rest = !deleteAll ? (int)(res) : 0;
 
 			pheromoneTrails [pEd].Shuffle ();

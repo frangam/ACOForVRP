@@ -72,6 +72,30 @@ public class UIManager : Singleton<UIManager> {
 	[SerializeField]
 	private Text lbSolution;
 
+	[SerializeField]
+	private Text lbPreSolCost;
+
+	[SerializeField]
+	private Text lbSolutionCost;
+
+	[SerializeField]
+	private Button preSolBtn;
+
+	[SerializeField]
+	private Button solBtn;
+
+	[SerializeField]
+	private GameObject detailsPanel;
+
+//	[SerializeField]
+//	private Text preSolDetailsTxt;
+
+	[SerializeField]
+	private Text solDetailsTxt;
+
+	[SerializeField]
+	private Transform detailsContent;
+
 	//--------------------------------------
 	// Private Attributes
 	//--------------------------------------
@@ -89,19 +113,26 @@ public class UIManager : Singleton<UIManager> {
 		resumeBtn.gameObject.SetActive (false);
 		settingsPnlOpened = false;
 		settingsPnl.SetActive (false);
+		detailsPanel.SetActive (false);
 		showInitialPheromone ();
 		showVisualProcess ();
 		makeMutationProcess ();
+		preSolBtn.interactable = false;
+		solBtn.interactable = false;
 	}
 
 	public void OnEnable(){
 		UniFileBrowser.OnFileOpened += OpenFile;
+		ACOSolver.OnSolved += ACOSolver_OnSolved;
 	}
+
 	public void OnDisable(){
 		UniFileBrowser.OnFileOpened -= OpenFile;
+		ACOSolver.OnSolved -= ACOSolver_OnSolved;
 	}
 	public void OnDistroy(){
 		UniFileBrowser.OnFileOpened -= OpenFile;
+		ACOSolver.OnSolved -= ACOSolver_OnSolved;
 	}
 
 	public void Start(){
@@ -109,7 +140,7 @@ public class UIManager : Singleton<UIManager> {
 		tgInitPheromone.isOn = ACOSolver.Instance.VisualInitPheromone;
 	}
 
-	public void Update(){
+	public void FixedUpdate(){
 		showCurrentExecutionTime ();
 	}
 
@@ -184,10 +215,41 @@ public class UIManager : Singleton<UIManager> {
 
 	public void showTotalRoutesCost(bool presolution, string solution, float cost){
 		if (presolution) {
-			lbPreSol.text = string.Format ("{0} ({1:0.00})", solution, cost);
+			lbPreSol.text = string.Format ("{0}", solution);
+			lbPreSolCost.text = string.Format ("Cost: {0:0.00}", cost);
 		} else {
-			lbSolution.text = string.Format ("{0} ({1:0.00})", solution, cost);
+			lbSolution.text = string.Format ("{0}", solution);
+			lbSolutionCost.text = string.Format ("Cost: {0:0.00}", cost);
 		}
+	}
+
+	private List<Text> detailsTexts;
+	public void showDetails(){
+		string[] pre = lbPreSol.text.Split(new string[] {". "}, System.StringSplitOptions.None);
+		string[] sol = lbSolution.text.Split(new string[] {". "}, System.StringSplitOptions.None);
+
+		if (detailsTexts != null && detailsTexts.Count > 0) {
+			foreach (Text t in detailsTexts)
+				Destroy (t.gameObject);
+		} else {
+			detailsTexts = new List<Text> ();
+		}
+
+		for (int i = 0; i < pre.Length; i++) {
+			Text t = (Text) GameObject.Instantiate (solDetailsTxt, detailsContent);
+			t.text = pre [i];
+			t.color = lbPreSol.color;
+			t.gameObject.SetActive (true);
+			detailsTexts.Add (t);
+
+			t = (Text) GameObject.Instantiate (solDetailsTxt, detailsContent);
+			t.text = sol [i];
+			t.color = lbSolution.color;
+			t.gameObject.SetActive (true);
+			detailsTexts.Add (t);
+		}
+
+		detailsPanel.SetActive (true);
 	}
 
 
@@ -225,5 +287,10 @@ public class UIManager : Singleton<UIManager> {
 		}
 		Debug.Log (message);
 
+	}
+
+	void ACOSolver_OnSolved (){
+		preSolBtn.interactable = true;
+		solBtn.interactable = true;
 	}
 }
