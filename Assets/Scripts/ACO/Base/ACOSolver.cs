@@ -382,7 +382,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 
 			//previous results
 			string solution = "";
-			if (totalEdges <= 100 || i == iterations-1) {
+//			if (totalEdges <= 100 || i == iterations-1) {
 				for (int aind = 0; aind < ants.Count; aind++) {
 					string tour = ants [aind].Paths [0].NodeA.Id + "-";
 					for (int ind = 0; ind < ants [aind].Paths.Count; ind++) {
@@ -392,7 +392,7 @@ public class ACOSolver : Singleton<ACOSolver>{
 					solution += aind < ants.Count - 1 ? tour + ". " : tour;
 				}
 				UIManager.Instance.showTotalRoutesCost (true, solution, ants.Sum (a => a.TotalRouteWeight)); 
-			}
+//			}
 				
 
 			//--------------------------------------
