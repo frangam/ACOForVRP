@@ -122,7 +122,6 @@ public class UIManager : Singleton<UIManager> {
 		detailsPanel.SetActive (false);
 		showInitialPheromone ();
 		showVisualProcess ();
-		runACOM ();
 		preSolBtn.interactable = false;
 		solBtn.interactable = false;
 
