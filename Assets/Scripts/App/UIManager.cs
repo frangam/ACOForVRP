@@ -216,10 +216,10 @@ public class UIManager : Singleton<UIManager> {
 	public void showTotalRoutesCost(bool presolution, string solution, float cost){
 		if (presolution) {
 			lbPreSol.text = string.Format ("{0}", solution);
-			lbPreSolCost.text = string.Format ("Cost: {0:0.00}", cost);
+			lbPreSolCost.text = string.Format ("Cost: {0}", cost);
 		} else {
 			lbSolution.text = string.Format ("{0}", solution);
-			lbSolutionCost.text = string.Format ("Cost: {0:0.00}", cost);
+			lbSolutionCost.text = string.Format ("Cost: {0}", cost);
 		}
 	}
 
