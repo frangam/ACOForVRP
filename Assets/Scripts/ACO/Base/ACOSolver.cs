@@ -124,6 +124,14 @@ public class ACOSolver : Singleton<ACOSolver>{
 	//--------------------------------------
 	// Getters & Setters
 	//--------------------------------------
+	public bool ImprovedACO {
+		get {
+			return this.improvedACO;
+		}
+		set {
+			improvedACO = value;
+		}
+	}
 	public bool Solved{
 		get{
 			return this.solved;

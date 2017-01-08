@@ -58,7 +58,13 @@ public class UIManager : Singleton<UIManager> {
 	private Toggle tgVisualProcess;
 
 	[SerializeField]
-	private Toggle tgMakeMutationProcess;
+	private Toggle tgACOW;
+
+	[SerializeField]
+	private Toggle tgACOM;
+
+	[SerializeField]
+	private Toggle tgIACO;
 
 	[SerializeField]
 	private Text lbExecutionTime;
@@ -116,9 +122,11 @@ public class UIManager : Singleton<UIManager> {
 		detailsPanel.SetActive (false);
 		showInitialPheromone ();
 		showVisualProcess ();
-		makeMutationProcess ();
+		runACOM ();
 		preSolBtn.interactable = false;
 		solBtn.interactable = false;
+
+
 	}
 
 	public void OnEnable(){
@@ -196,10 +204,25 @@ public class UIManager : Singleton<UIManager> {
 		ACOSolver.Instance.ShowVisualProcess = tgVisualProcess.isOn;
 	}
 
-	public void makeMutationProcess(){
-		bool isOn = tgMakeMutationProcess.isOn;
+	public void runACOM(){
+		bool isOn = tgACOM.isOn;
+		ACOSolver.Instance.ImprovedACO = !isOn;
 		ACOSolver.Instance.DoMutation = isOn;
-		lbPreSolTitle.text = isOn ? "Pre-mutation:" : "Pre 2-opt:";
+		lbPreSolTitle.text = "Pre-mutation:" ;
+	}
+
+	public void runACOW(){
+		bool isOn = tgACOW.isOn;
+		ACOSolver.Instance.ImprovedACO = isOn;
+		ACOSolver.Instance.DoMutation = !isOn;
+		lbPreSolTitle.text = "Pre 2-opt:";
+	}
+
+	public void runIACO(){
+		bool isOn = tgIACO.isOn;
+		ACOSolver.Instance.ImprovedACO = isOn;
+		ACOSolver.Instance.DoMutation = isOn;
+		lbPreSolTitle.text = "Pre 2-opt:";
 	}
 
 	public void showCurrentExecutionTime(){
