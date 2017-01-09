@@ -440,13 +440,13 @@ public class ACOSolver : Singleton<ACOSolver>{
 //				UnityEngine.Debug.Log ("current best sol found: " + bestSolution.Sum (b => b.TotalRouteWeight).ToString ());
 			}
 
-			//we draw the final solution before improve it
+			//we draw the best solution  found
 			if (i == iterations - 1) {
 				stopWatch.Stop ();
 
 				UnityEngine.Debug.Log ("best cost: "+bestSolution.Sum(b=>b.TotalRouteWeight).ToString());
 
-//				ants = new List<VRPAnt> (bestSolution);
+				ants = new List<VRPAnt> (bestSolution);
 
 //				UnityEngine.Debug.Log ("ants: " + ants.Sum (b => b.TotalRouteWeight).ToString ());
 
